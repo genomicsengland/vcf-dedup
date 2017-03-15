@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from vcf.model import _Record
 
 
 class AbstractVariantComparer(object):
@@ -14,6 +15,10 @@ class VariantComparerNoAlternate(AbstractVariantComparer):
 
     def equals(self, variant1, variant2):
 
+        """
+
+        :type variant1: _Record
+        """
         return (variant1.CHROM == variant2.CHROM and
                 variant1.POS == variant2.POS and
                 variant1.REF == variant2.REF)
