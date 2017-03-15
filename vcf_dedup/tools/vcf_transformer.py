@@ -66,23 +66,17 @@ class AbstractVcfTransformer(object):
     def transform_variant(self, variant):
         pass
 
-    def equal_variants(self, variant1, variant2):
-        """
-
-        :param variant1:
-        :param variant2:
-        :return:  a boolean indicating if the variants are equal
-        """
-        #TODO: implement something
-        return (variant1.CHROM == variant2.CHROM and variant1.POS == variant2.POS and
-                variant1.REF == variant2.REF)
-        # TODO: use also ALT, beware that this is a list
-        ## and variant1.ALT == variant2.ALT)
-
 
 class VcfDedupper(AbstractVcfTransformer):
 
     variants = []
+
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer):
+
+        # calls the parent constructor
+        AbstractVcfTransformer.__init__(self, input_vcf_file, output_vcf_file)
+        # stores the variant comparer
+        self.variant_comparer = variant_comparer
 
     def transform_variant(self, variant):
         """
@@ -96,7 +90,8 @@ class VcfDedupper(AbstractVcfTransformer):
         prev_variant = None
         if len(self.variants) > 0:
             prev_variant = self.variants[len(self.variants) - 1]
-        if prev_variant is not None and not self.equal_variants(prev_variant, variant):
+        if prev_variant is not None and \
+                not self.variant_comparer.equals(prev_variant, variant):
             # transforms variants
             merged_variant = None
             is_passed = False
