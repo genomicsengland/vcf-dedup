@@ -144,23 +144,72 @@ class VcfDedupper(AbstractVcfTransformer):
         # next block
         if prev_variant is not None and \
                 not self.variant_comparer.equals(prev_variant, variant):
-            merged_variant = None
-            is_passed = False
-            # merges all variants in one, takes the first one not filtered or just the first one
-            for variant in self.variants:
-                if merged_variant is None:
-                    merged_variant = variant
-                    is_passed = len(merged_variant.FILTER) == 0
-                elif not is_passed:
-                    if len(variant.FILTER) == 0:
-                        merged_variant = variant
-            # writes transformed variant
-            self.writer.write_record(merged_variant)
+            # writes merged variant
+            self.writer.write_record(self.merge_variants(self.variants))
             # resets variants memory
             self.variants = [variant]
         # current variant forms part of the same block, stores and continues
         else:
             self.variants.append(variant)
+
+    def merge_variants(self, variants):
+        """
+        Get all variants with PASS
+        # If only 1, return that one
+        # if more than 1, calculate AF over all PASS and get highest
+        # if 0, calculate AF over all and get highest
+        :param variants:
+        :return: the merged variant
+        """
+        merged_variant = None
+        # gets all passed variants
+        passed_variants = [variant for variant in variants if len(variant.FILTER) == 0]
+        if len(passed_variants) == 1:
+            merged_variant = passed_variants[0]
+        elif len(passed_variants) > 1:
+            allele_frequencies = {passed_variant : self.calculate_somatic_AF(passed_variant)
+                                  for passed_variant in passed_variants}
+            merged_variant = max(allele_frequencies, key=allele_frequencies.get)
+        elif len(passed_variants) == 0:
+            allele_frequencies = {variant: self.calculate_somatic_AF(variant) for variant in variants}
+            merged_variant = max(allele_frequencies, key=allele_frequencies.get)
+
+        return merged_variant
+
+
+    def calculate_somatic_AF(self, variant):
+        """
+        Return the ratio of supporting reads for somatic variants called by Strelka
+        For SNVs: alternate AC / (alternate AC + reference AC)
+        For indels: indel AC / (alternate AC + indel AC)
+        :param variant:
+        :return:
+        """
+        logging.debug("Calculating somatic ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
+        af = 0
+        if variant.is_snp:
+            reference = str(variant.REF)
+            # TODO: capture error when multiallelic gets here
+            alternate = str(variant.ALT[0])
+            # TODO: capture error when no samples available
+            # TODO: consider case when multiple samples are available
+            # TODO: capture error when no AU, CU, etc in sample data
+            reference_ac = variant.samples[0].data._asdict()[reference + "U"][0]
+            alternate_ac = variant.samples[0].data._asdict()[alternate + "U"][0]
+            af = alternate_ac / (alternate_ac + reference_ac)
+        elif variant.is_indel:
+            # TODO: capture error when no TIR or TAR in sample data
+            indel_ac = variant.samples[0].data._asdict()["TIR"][0]
+            alternate_ac = variant.samples[0].data._asdict()["TAR"][0]
+            af = indel_ac / (alternate_ac + indel_ac)
+        elif variant.is_sv:
+            # TODO: what should we do with these ones?
+            pass
+        else:
+            # TODO: will this ever happen?
+            pass
+
+        return af
 
 
 
