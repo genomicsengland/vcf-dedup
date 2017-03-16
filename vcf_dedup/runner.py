@@ -1,5 +1,5 @@
 import logging
-from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper
+from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, DuplicationFinder
 from vcf_dedup.tools.variant_comparer import VariantComparerNoAlternate, VariantComparerWithAlternate
 
 
@@ -11,7 +11,7 @@ class VcfDedupRunner(object):
 
     # TODO: add the rare diseases caller here, platypus?
     # TODO: add others
-    SUPPORTED_VARIANT_CALLERS = ["strelka", "starling"]
+    SUPPORTED_VARIANT_CALLERS = ["strelka", "starling", "duplication_finder"]
     SUPPORTED_EQUALITY_MODE = ["1", "2"]
 
     def __init__(self, config):
@@ -48,6 +48,8 @@ class VcfDedupRunner(object):
             transformer = StrelkaVcfDedupper(self.input_vcf, self.output_vcf, comparer)
         elif self.variant_caller == "starling":
             transformer = StarlingVcfDedupper(self.input_vcf, self.output_vcf, comparer)
+        elif self.variant_caller == "duplication_finder":
+            transformer = DuplicationFinder(self.input_vcf, self.output_vcf, comparer)
         # run the transformation
         transformer.process_vcf()
 
