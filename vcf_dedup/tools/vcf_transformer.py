@@ -84,12 +84,12 @@ class AbstractVcfTransformer(object):
         #pool = multiprocessing.Pool()
         #pool.map(process_contig, itertools.izip(itertools.repeat(self), contigs_records))
 
-        #FIXME: error reading contig chr11_KI270721v1_random
+        # FIXME: error reading contig chr11_KI270721v1_random
         #for contig in self.reader.contigs:
         #    self.process_contig(contig)
         count = 0
         for variant in self.reader:
-            self.transform_variant(variant)
+            self._transform_variant(variant)
             count += 1
             if count % 10000 == 0:
                 logging.info("Processed %s variants..." % str(count))
@@ -98,7 +98,7 @@ class AbstractVcfTransformer(object):
         logging.info("Finished processing %s variants in %s seconds" % (str(count), str(after - before)))
 
 
-    def process_contig(self, contig):
+    def _process_contig(self, contig):
         """
 
         :param contig: the contig to process
@@ -108,18 +108,18 @@ class AbstractVcfTransformer(object):
         logging.info("Processing contig %s" % contig)
         before = time.time()
         for variant in self.reader.fetch(contig):
-            self.transform_variant(variant)
+            self._transform_variant(variant)
         after = time.time()
         logging.info("Finished contig %s in %s seconds" % (contig, str(after - before)))
 
     @abstractmethod
-    def transform_variant(self, variant):
+    def _transform_variant(self, variant):
         pass
 
 
 
 
-class VcfDedupper(AbstractVcfTransformer):
+class AbstractVcfDedupper(AbstractVcfTransformer):
 
     variants = []
 
@@ -130,7 +130,7 @@ class VcfDedupper(AbstractVcfTransformer):
         # stores the variant comparer
         self.variant_comparer = variant_comparer
 
-    def transform_variant(self, variant):
+    def _transform_variant(self, variant):
         """
         Variant transformation. Stores all variants with equal coordinates and writes a merged result.
         :param variant: the current variant
@@ -145,14 +145,21 @@ class VcfDedupper(AbstractVcfTransformer):
         if prev_variant is not None and \
                 not self.variant_comparer.equals(prev_variant, variant):
             # writes merged variant
-            self.writer.write_record(self.merge_variants(self.variants))
+            self.writer.write_record(self._merge_variants(self.variants))
             # resets variants memory
             self.variants = [variant]
         # current variant forms part of the same block, stores and continues
         else:
             self.variants.append(variant)
 
-    def merge_variants(self, variants):
+    @abstractmethod
+    def _merge_variants(self, variants):
+        pass
+
+
+class StrelkaVcfDedupper(AbstractVcfDedupper):
+
+    def _merge_variants(self, variants):
         """
         Get all variants with PASS
         # If only 1, return that one
@@ -167,17 +174,17 @@ class VcfDedupper(AbstractVcfTransformer):
         if len(passed_variants) == 1:
             merged_variant = passed_variants[0]
         elif len(passed_variants) > 1:
-            allele_frequencies = {passed_variant : self.calculate_somatic_AF(passed_variant)
+            allele_frequencies = {passed_variant : self._calculate_somatic_AF(passed_variant)
                                   for passed_variant in passed_variants}
             merged_variant = max(allele_frequencies, key=allele_frequencies.get)
         elif len(passed_variants) == 0:
-            allele_frequencies = {variant: self.calculate_somatic_AF(variant) for variant in variants}
+            allele_frequencies = {variant: self._calculate_somatic_AF(variant) for variant in variants}
             merged_variant = max(allele_frequencies, key=allele_frequencies.get)
 
         return merged_variant
 
 
-    def calculate_somatic_AF(self, variant):
+    def _calculate_somatic_AF(self, variant):
         """
         Return the ratio of supporting reads for somatic variants called by Strelka
         For SNVs: alternate AC / (alternate AC + reference AC)
@@ -210,6 +217,30 @@ class VcfDedupper(AbstractVcfTransformer):
             pass
 
         return af
+
+
+class StarlingVcfDedupper(AbstractVcfDedupper):
+
+    def _merge_variants(self, variants):
+        """
+        Get all variants with PASS
+        # If only 1, return that one
+        # if more than 1, selects arbitrarily the first passed variant
+        # if 0, selects arbitrarily the first variant
+        :param variants:
+        :return: the merged variant
+        """
+        merged_variant = None
+        # gets all passed variants
+        passed_variants = [variant for variant in variants if len(variant.FILTER) == 0]
+        if len(passed_variants) == 1:
+            merged_variant = passed_variants[0]
+        elif len(passed_variants) > 1:
+            merged_variant = passed_variants[0]
+        elif len(passed_variants) == 0:
+            merged_variant = variants[0]
+
+        return merged_variant
 
 
 
