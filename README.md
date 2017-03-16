@@ -1,0 +1,55 @@
+# VCF dedupper
+
+VCF files may contain duplicated after normalisation or merging of VCFs. This module intends to remove those duplicates in a sensible way. This process is very specific to the variant caller, we only support Strelka and Starling variant callers. Platypus might be supported in future releases. The variant caller might be selected with the parameter `--variant-caller`.
+
+Variant duplicates are identified by having the same genomic coordinates and optionally the same alternate allele. This is controlled with the parameter `--equality-mode`.
+
+The currrent implementation takes into account:
+1. The filtering information. Whenever there is one and only one variant non filtered (i.e.: PASS) This will be the resulting variant.
+2. Other criteria are used when there is a collision (i.e.: two or more non filtered variants or all filtered variants)
+    * Highest allele frequency (i.e.: ratio of supporting reads for the variant call)
+    * Highest variant calling quality.
+    
+The output VCF should not contain any duplicate.
+
+## Assumptions
+
+* Multi-allelic variants are not supported
+* VCF must be sorted
+
+
+## Using the VCF dedupper
+
+The VCF dedupper comes in two flavors:
+1. A command line script
+2. A python module that can be used programmatically
+
+### Script
+
+```
+vcf_dedupper --input-vcf $INPUT_VCF --output-vcf $OUTPUT_VCF --variant-caller $(one of "strelka", "starling" or "duplication_finder")
+```
+
+The `duplication_finder` mode writes to the output only those variants that are duplicated without removing any duplicates. This mode is intended to facilitate the analysis of the root cause of duplications.
+
+The `equality-mode` may be changed to use a less restrictive definition of duplicates using only chromosome, position and reference. By default it uses chromosome, position, reference and alternate.
+
+The `sample-idx` indicates as a 0-based index for multisample VCFs the sample to which collision criteria will be applied.
+
+### Python module
+
+```
+from vcf_dedup.runner import VcfDedupRunner
+
+
+config = {
+        "input_vcf" : input_vcf,
+        "output_vcf" : output_vcf,
+        "variant_caller": variant_caller,
+        "equality_mode": equality_mode,
+        "sample_idx": sample_idx
+    }
+# Calls the VCF dedupper
+runner = VcfDedupRunner(config)
+runner.process_vcf()
+```
