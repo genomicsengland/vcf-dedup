@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+import argparse
+import logging
+from vcf_dedup.runner import VcfDedupRunner
+
+
+def main():
+
+    parser = argparse.ArgumentParser(description = 'VCF variant duplication removal')
+    parser.add_argument('--input-vcf', metavar='input_vcf', help = 'The input VCF compressed or not [required]', required = True)
+    parser.add_argument('--output-vcf', metavar='output_vcf', help='The output VCF [required]', required=True)
+    parser.add_argument('--variant-caller', metavar='variant_caller',
+                        help='The variant caller used to generate the input VCF. One of "strelka", '
+                             '"starling", "platypus", "duplication_finder" [required]', required=True)
+    parser.add_argument('--equality-mode', metavar='equality_mode',
+                        help='The mode to find equal variants. "1": chromosome, position, reference and alternate must '
+                             'be equal; "2": chromosome, position and reference must be equal [required]',
+                        required=True)
+    parser.add_argument('--sample-idx', metavar='sample_idx',
+                        help='For multisample VCFs this 0-based index indicates the sample to be used to merge'
+                             'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
+                             'will be calculated on the sample indicated by this index.',
+                        default=0)
+    parser.add_argument('--verbose', action='store_true')
+    parser.set_defaults(sample_idx=0)
+
+
+    args = parser.parse_args()
+
+    # Sets logging level
+    logging.basicConfig(level = 10 if args.verbose else 20)
+
+    # Creates a data structure with all config parameters
+    config = {
+        # Sets parameters from CLI
+        "input_vcf" : args.input_vcf,
+        "output_vcf" : args.output_vcf,
+        "variant_caller": args.variant_caller,
+        "equality_mode": args.equality_mode,
+        "sample_idx": args.sample_idx
+    }
+    # Calls the VCF dedupper
+    runner = VcfDedupRunner(config)
+    runner.process_vcf()
+
+if __name__ == '__main__':
+    main()
