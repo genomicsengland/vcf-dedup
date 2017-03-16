@@ -158,6 +158,10 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
 
 class StrelkaVcfDedupper(AbstractVcfDedupper):
+    """
+    Strelka is the variant caller for somatic variants in cancer program.
+    This class performs the merging of duplicated variants from Strelka.
+    """
 
     def _merge_variants(self, variants):
         """
@@ -220,6 +224,10 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
 
 
 class StarlingVcfDedupper(AbstractVcfDedupper):
+    """
+    Starling is the variant caller for cancer germline variants.
+    This class performs the merging of duplicated variants from Starling.
+    """
 
     def _merge_variants(self, variants):
         """
@@ -243,7 +251,19 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
         return merged_variant
 
 
+class PlatypusVcfDedupper(AbstractVcfDedupper):
+    """
+    Platypus is the variant caller for rare disease germline variants.
+    This class performs the merging of duplicated variants from Platypus.
+    """
 
+    def _merge_variants(self, variants):
+        """
+
+        :param variants:
+        :return:
+        """
+        raise NotImplemented()
 
 
 
