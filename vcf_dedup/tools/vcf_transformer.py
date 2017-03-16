@@ -116,46 +116,6 @@ class AbstractVcfTransformer(object):
         pass
 
 
-
-
-class AbstractVcfDedupper(AbstractVcfTransformer):
-
-    variants = []
-
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer):
-
-        # calls the parent constructor
-        AbstractVcfTransformer.__init__(self, input_vcf_file, output_vcf_file)
-        # stores the variant comparer
-        self.variant_comparer = variant_comparer
-
-    def _transform_variant(self, variant):
-        """
-        Variant transformation. Stores all variants with equal coordinates and writes a merged result.
-        :param variant: the current variant
-        :return: None
-        """
-        # Reads previous variant if any
-        prev_variant = None
-        if len(self.variants) > 0:
-            prev_variant = self.variants[len(self.variants) - 1]
-        # if previous and current variants are not equal it merges the block and stores the current variant for the
-        # next block
-        if prev_variant is not None and \
-                not self.variant_comparer.equals(prev_variant, variant):
-            # writes merged variant
-            self.writer.write_record(self._merge_variants(self.variants))
-            # resets variants memory
-            self.variants = [variant]
-        # current variant forms part of the same block, stores and continues
-        else:
-            self.variants.append(variant)
-
-    @abstractmethod
-    def _merge_variants(self, variants):
-        pass
-
-
 class DuplicationFinder(AbstractVcfTransformer):
 
     variants = []
@@ -197,12 +157,61 @@ class DuplicationFinder(AbstractVcfTransformer):
             self.variants.append(variant)
 
 
+class AbstractVcfDedupper(AbstractVcfTransformer):
+
+    variants = []
+
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer):
+
+        # calls the parent constructor
+        AbstractVcfTransformer.__init__(self, input_vcf_file, output_vcf_file)
+        # stores the variant comparer
+        self.variant_comparer = variant_comparer
+
+    def _transform_variant(self, variant):
+        """
+        Variant transformation. Stores all variants with equal coordinates and writes a merged result.
+        :param variant: the current variant
+        :return: None
+        """
+        # Reads previous variant if any
+        prev_variant = None
+        if len(self.variants) > 0:
+            prev_variant = self.variants[len(self.variants) - 1]
+        # if previous and current variants are not equal it merges the block and stores the current variant for the
+        # next block
+        if prev_variant is not None and \
+                not self.variant_comparer.equals(prev_variant, variant):
+            if len(self.variants) > 1:
+                # writes merged variant
+                self.writer.write_record(self._merge_variants(self.variants))
+            else:
+                # writes the variant when there is no duplication
+                self.writer.write_record(self.variants[0])
+            # resets variants memory
+            self.variants = [variant]
+        # current variant forms part of the same block, stores and continues
+        else:
+            self.variants.append(variant)
+
+    @abstractmethod
+    def _merge_variants(self, variants):
+        pass
+
+
 class StrelkaVcfDedupper(AbstractVcfDedupper):
     """
     Strelka is the variant caller for somatic variants in cancer program.
     This class performs the merging of duplicated variants from Strelka.
     PRE: VCFs are single sample
     """
+
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, tumor_sample_idx):
+
+        # calls the parent constructor
+        AbstractVcfDedupper.__init__(self, input_vcf_file, output_vcf_file, variant_comparer)
+        # stores the variant comparer
+        self.tumor_sample_idx = tumor_sample_idx
 
     def _merge_variants(self, variants):
         """
@@ -241,7 +250,7 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
         """
         logging.debug("Calculating somatic ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
         af = 0
-        format = variant.samples[0].data._asdict()
+        format = variant.samples[self.tumor_sample_idx].data._asdict()
         if variant.is_snp:
             reference = str(variant.REF)
             # TODO: capture error when multiallelic gets here
@@ -251,12 +260,12 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
             # TODO: consider case when multiple samples are available
                 reference_ac = format[reference + "U"][0]
                 alternate_ac = format[alternate + "U"][0]
-                af = alternate_ac / (alternate_ac + reference_ac)
+                af = alternate_ac / (alternate_ac + reference_ac) if alternate_ac + reference_ac > 0 else 0
         elif variant.is_indel:
             if ("TIR" in format and "TAR" in format):
                 indel_ac = format["TIR"][0]
                 alternate_ac = format["TAR"][0]
-                af = indel_ac / (alternate_ac + indel_ac)
+                af = indel_ac / (alternate_ac + indel_ac) if alternate_ac + indel_ac > 0 else 0
         elif variant.is_sv:
             # TODO: what should we do with these ones?
             pass
@@ -312,7 +321,7 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
         if ("AC" in format and len(format["AC"]) == 2):
             reference_ac = format["AC"][0]
             alternate_ac = format["AC"][1]
-            af = alternate_ac / (alternate_ac + reference_ac)
+            af = alternate_ac / (alternate_ac + reference_ac) if alternate_ac + reference_ac > 0 else 0
         return af
 
 
