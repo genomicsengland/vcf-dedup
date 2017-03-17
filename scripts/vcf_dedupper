@@ -12,16 +12,20 @@ def main():
     parser.add_argument('--variant-caller', metavar='variant_caller',
                         help='The variant caller used to generate the input VCF. One of "strelka", '
                              '"starling", "platypus", "duplication_finder" [required]', required=True)
+    parser.add_argument('--selection-method', metavar='selection_method',
+                        help='The selection method for ties in filtering status between duplicated variants. One of "af", '
+                             '"quality", "arbitrary" [required]', required=True)
     parser.add_argument('--equality-mode', metavar='equality_mode',
                         help='The mode to find equal variants. "1": chromosome, position, reference and alternate must '
                              'be equal; "2": chromosome, position and reference must be equal [required]',
-                        required=True)
+                        default="1")
     parser.add_argument('--sample-idx', metavar='sample_idx',
                         help='For multisample VCFs this 0-based index indicates the sample to be used to merge'
                              'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
                              'will be calculated on the sample indicated by this index.',
                         default=0)
     parser.add_argument('--verbose', action='store_true')
+    parser.set_defaults(equality_mode="1")
     parser.set_defaults(sample_idx=0)
 
 
@@ -36,6 +40,7 @@ def main():
         "input_vcf" : args.input_vcf,
         "output_vcf" : args.output_vcf,
         "variant_caller": args.variant_caller,
+        "selection_method": args.selection_method,
         "equality_mode": args.equality_mode,
         "sample_idx": args.sample_idx
     }

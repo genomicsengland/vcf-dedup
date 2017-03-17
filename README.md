@@ -6,7 +6,7 @@ Variant duplicates are identified by having the same genomic coordinates and opt
 
 The currrent implementation takes into account:
 1. The filtering information. Whenever there is one and only one variant non filtered (i.e.: PASS) This will be the resulting variant.
-2. Other criteria are used when there is a collision (i.e.: two or more non filtered variants or all filtered variants)
+2. Other criteria are used when there is a collision in filtering status (i.e.: two or more non filtered variants or all filtered variants). This is set with `--selection-method`
     * Highest allele frequency (i.e.: ratio of supporting reads for the variant call)
     * Highest variant calling quality.
     
@@ -27,14 +27,14 @@ The VCF dedupper comes in two flavors:
 ### Script
 
 ```
-vcf_dedupper --input-vcf $INPUT_VCF --output-vcf $OUTPUT_VCF --variant-caller $(one of "strelka", "starling" or "duplication_finder")
+vcf_dedupper --input-vcf $INPUT_VCF --output-vcf $OUTPUT_VCF --variant-caller $(one of "strelka", "starling" or "duplication_finder") --selection-method $(one of "af", "quality", "arbitrary")
 ```
 
 The `duplication_finder` mode writes to the output only those variants that are duplicated without removing any duplicates. This mode is intended to facilitate the analysis of the root cause of duplications.
 
 The `equality-mode` may be changed to use a less restrictive definition of duplicates using only chromosome, position and reference. By default it uses chromosome, position, reference and alternate.
 
-The `sample-idx` indicates as a 0-based index for multisample VCFs the sample to which collision criteria will be applied.
+The `sample-idx` indicates as a 0-based index for multisample VCFs the sample to which collision criteria will be applied. Beware that for Strelka VCFs the tumor sample is in the second sample (i.e.: index = 1), this might change.
 
 ### Python module
 
@@ -46,6 +46,7 @@ config = {
         "input_vcf" : input_vcf,
         "output_vcf" : output_vcf,
         "variant_caller": variant_caller,
+        "selection_method": selection_method,
         "equality_mode": equality_mode,
         "sample_idx": sample_idx
     }

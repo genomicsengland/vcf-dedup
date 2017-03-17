@@ -31,4 +31,5 @@ class VariantComparerWithAlternate(AbstractVariantComparer):
         return (variant1.CHROM == variant2.CHROM and
                 variant1.POS == variant2.POS and
                 variant1.REF == variant2.REF and
-                set(variant1.ALT) == set(variant2.ALT))
+                set([str(alternate) for alternate in variant1.ALT]) ==
+                set([str(alternate) for alternate in variant2.ALT]))

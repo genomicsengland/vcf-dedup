@@ -82,7 +82,7 @@ class AbstractVcfTransformer(object):
             count += 1
             if count % 10000 == 0:
                 logging.info("Processed %s variants..." % str(count))
-
+        self._write_last_block()
         after = time.time()
         logging.info("Finished processing %s variants in %s seconds" % (str(count), str(after - before)))
 
@@ -113,6 +113,9 @@ class AbstractVcfTransformer(object):
 
     @abstractmethod
     def _transform_variant(self, variant):
+        pass
+
+    def _write_last_block(self):
         pass
 
 
@@ -161,12 +164,19 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
     variants = []
 
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer):
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method):
 
         # calls the parent constructor
         AbstractVcfTransformer.__init__(self, input_vcf_file, output_vcf_file)
         # stores the variant comparer
         self.variant_comparer = variant_comparer
+        # sets the selection method
+        if selection_method == "af":
+            self._select_variants = self._select_mode_af
+        elif selection_method == "quality":
+            self._select_variants = self._select_mode_quality
+        elif selection_method == "arbitrary":
+            self._select_variants = self._select_mode_arbitrary
 
     def _transform_variant(self, variant):
         """
@@ -194,31 +204,65 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         else:
             self.variants.append(variant)
 
+    def _write_last_block(self):
+        """
+        Writes the last block stored in self.variants
+        :return:
+        """
+        if len(self.variants) > 1:
+            # writes merged variant
+            self.writer.write_record(self._merge_variants(self.variants))
+        else:
+            # writes the variant when there is no duplication
+            self.writer.write_record(self.variants[0])
+        # clears it
+        self.variants = []
+
     @abstractmethod
-    def _merge_variants(self, variants):
+    def _calculate_AF(self, variant):
         pass
 
+    @abstractmethod
+    def _get_variant_calling_quality(self, variant):
+        pass
 
-class StrelkaVcfDedupper(AbstractVcfDedupper):
-    """
-    Strelka is the variant caller for somatic variants in cancer program.
-    This class performs the merging of duplicated variants from Strelka.
-    PRE: VCFs are single sample
-    """
+    def _select_mode_af(self, variants):
+        """
+        Returns the variants with the highest allele frequency
+        :param variants:
+        :return:
+        """
+        allele_frequencies = {variant: self._calculate_AF(variant)
+                              for variant in variants}
+        merged_variant = max(allele_frequencies, key=allele_frequencies.get)
+        return merged_variant
 
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, tumor_sample_idx):
+    def _select_mode_quality(self, variants):
+        """
+        Returns the variant with the highest variant calling quality
+        :param variants:
+        :return:
+        """
+        qualities = {variant: self._get_variant_calling_quality(variant)
+                              for variant in variants}
+        merged_variant = max(qualities, key=qualities.get)
+        return merged_variant
 
-        # calls the parent constructor
-        AbstractVcfDedupper.__init__(self, input_vcf_file, output_vcf_file, variant_comparer)
-        # stores the variant comparer
-        self.tumor_sample_idx = tumor_sample_idx
+    def _select_mode_arbitrary(self, variants):
+        """
+        Returns the first variant from the list
+        :param variants:
+        :return:
+        """
+        merged_variant = variants[0]
+        return merged_variant
 
     def _merge_variants(self, variants):
         """
         Get all variants with PASS
         # If only 1, return that one
-        # if more than 1, calculate AF over all PASS and get highest
-        # if 0, calculate AF over all and get highest
+        # if more than 1, run selection mode on passed variants
+        # if 0, calculate AF run selection mode on all
         :param variants:
         :return: the merged variant
         """
@@ -228,17 +272,28 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
         if len(passed_variants) == 1:
             merged_variant = passed_variants[0]
         elif len(passed_variants) > 1:
-            allele_frequencies = {passed_variant : self._calculate_somatic_AF(passed_variant)
-                                  for passed_variant in passed_variants}
-            merged_variant = max(allele_frequencies, key=allele_frequencies.get)
+            merged_variant = self._select_variants(passed_variants)
         elif len(passed_variants) == 0:
-            allele_frequencies = {variant: self._calculate_somatic_AF(variant) for variant in variants}
-            merged_variant = max(allele_frequencies, key=allele_frequencies.get)
+            merged_variant = self._select_variants(variants)
 
         return merged_variant
 
 
-    def _calculate_somatic_AF(self, variant):
+class StrelkaVcfDedupper(AbstractVcfDedupper):
+    """
+    Strelka is the variant caller for somatic variants in cancer program.
+    This class performs the merging of duplicated variants from Strelka.
+    PRE: VCFs are single sample
+    """
+
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method, tumor_sample_idx):
+
+        # calls the parent constructor
+        AbstractVcfDedupper.__init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method)
+        # stores the variant comparer
+        self.tumor_sample_idx = tumor_sample_idx
+
+    def _calculate_AF(self, variant):
         """
         Return the ratio of supporting reads for somatic variants called by Strelka
         For SNVs: alternate AC / (alternate AC + reference AC)
@@ -275,6 +330,23 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
 
         return af
 
+    def _get_variant_calling_quality(self, variant):
+        """
+        Retrieves the variant calling quality from the VQSR info field
+        'Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.'
+        :param variant:     the variant
+        :return:            the variant calling quality
+        """
+        variant_calling_quality = 0.0
+        if "VQSR" in variant.INFO:
+            variant_calling_quality = variant.INFO["VQSR"]
+        try:
+            variant_calling_quality = float(variant_calling_quality)
+        except Exception:
+            variant_calling_quality = 0.0
+        return variant_calling_quality
+
+
 
 class StarlingVcfDedupper(AbstractVcfDedupper):
     """
@@ -282,30 +354,6 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
     This class performs the merging of duplicated variants from Starling.
     PRE: VCFs are single sample
     """
-
-    def _merge_variants(self, variants):
-        """
-        Get all variants with PASS
-        # If only 1, return that one
-        # if more than 1, selects arbitrarily the first passed variant
-        # if 0, selects arbitrarily the first variant
-        :param variants:
-        :return: the merged variant
-        """
-        merged_variant = None
-        # gets all passed variants
-        passed_variants = [variant for variant in variants if len(variant.FILTER) == 0]
-        if len(passed_variants) == 1:
-            merged_variant = passed_variants[0]
-        elif len(passed_variants) > 1:
-            allele_frequencies = {passed_variant: self._calculate_AF(passed_variant)
-                                  for passed_variant in passed_variants}
-            merged_variant = max(allele_frequencies, key=allele_frequencies.get)
-        elif len(passed_variants) == 0:
-            allele_frequencies = {variant: self._calculate_AF(variant) for variant in variants}
-            merged_variant = max(allele_frequencies, key=allele_frequencies.get)
-        return merged_variant
-
 
     def _calculate_AF(self, variant):
         """
@@ -324,6 +372,24 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
             af = alternate_ac / (alternate_ac + reference_ac) if alternate_ac + reference_ac > 0 else 0
         return af
 
+    def _get_variant_calling_quality(self, variant):
+        """
+        Retrieves the variant calling quality from the GQX format field
+        'Empirically calibrated variant quality score for variant sites, otherwise Minimum of {Genotype quality
+        assuming variant position,Genotype quality assuming non-variant position}'
+        :param variant:     the variant
+        :return:            the variant calling quality
+        """
+        variant_calling_quality = 0
+        format = variant.samples[0].data._asdict()
+        if "GQX" in format:
+            variant_calling_quality = format["GQX"]
+        try:
+            variant_calling_quality = int(variant_calling_quality)
+        except Exception:
+            variant_calling_quality = 0
+        return variant_calling_quality
+
 
 class PlatypusVcfDedupper(AbstractVcfDedupper):
     """
@@ -332,7 +398,7 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
     PRE: VCFs are multi-sample
     """
 
-    def _merge_variants(self, variants):
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method):
         """
 
         :param variants:
