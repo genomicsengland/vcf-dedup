@@ -234,7 +234,19 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         """
         allele_frequencies = {variant: self._calculate_AF(variant)
                               for variant in variants}
-        merged_variant = max(allele_frequencies, key=allele_frequencies.get)
+        max_af = allele_frequencies[max(allele_frequencies, key=allele_frequencies.get)]
+        max_afs = [i for i, x in allele_frequencies.iteritems() if x == max_af]
+        if (len(max_afs) > 1):
+            # collision with maximum AF
+            qualities = {variant: self._get_variant_calling_quality(variant)
+                                  for variant in variants}
+            max_qual = qualities[max(qualities, key=qualities.get)]
+            max_quals = [i for i, x in qualities.iteritems() if x == max_qual]
+            # gets the first
+            merged_variant = max_quals[0]
+        else:
+            merged_variant = max_afs[0]
+
         return merged_variant
 
     def _select_mode_quality(self, variants):
@@ -244,8 +256,19 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :return:
         """
         qualities = {variant: self._get_variant_calling_quality(variant)
-                              for variant in variants}
-        merged_variant = max(qualities, key=qualities.get)
+                     for variant in variants}
+        max_qual = qualities[max(qualities, key=qualities.get)]
+        max_quals = [i for i, x in qualities.iteritems() if x == max_qual]
+        if (len(max_quals) > 1):
+            # collision with maximum AF
+            allele_frequencies = {variant: self._calculate_AF(variant)
+                                  for variant in variants}
+            max_af = allele_frequencies[max(allele_frequencies, key=allele_frequencies.get)]
+            max_afs = [i for i, x in allele_frequencies.iteritems() if x == max_af]
+            # gets the first
+            merged_variant = max_afs[0]
+        else:
+            merged_variant = max_quals[0]
         return merged_variant
 
     def _select_mode_arbitrary(self, variants):
