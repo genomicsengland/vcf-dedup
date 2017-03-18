@@ -1,3 +1,10 @@
+version 0.1.1 (18 March 2017)
+----------------------------
+
+* Minor Changes:
+    - Fixed bug on `sample-idx` parameter
+
+
 version 0.1.0 (17 March 2017)
 ----------------------------
 

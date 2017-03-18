@@ -25,7 +25,7 @@ class VcfDedupRunner(object):
         self.variant_caller = config["variant_caller"]
         self.selection_method = config["selection_method"]
         self.equality_mode = config["equality_mode"]
-        self.tumor_sample_idx = config["tumor_sample_idx"]
+        self.sample_idx = config["sample_idx"]
 
     def sanity_checks(self):
         """
@@ -42,11 +42,8 @@ class VcfDedupRunner(object):
             raise VcfDedupInputError("Missing parameter 'selection_method'")
         if "equality_mode" not in self.config:
             raise VcfDedupInputError("Missing parameter 'equality_mode'")
-        if "tumor_sample_idx" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'tumor_sample_idx'")
-        if self.config["tumor_sample_idx"] not in ["0", "1"]:
-            raise VcfDedupInputError("Non supported tumor sample index [%s]. It must a vlue in '0' and '1'" %
-                                     (self.config["tumor_sample_idx"]))
+        if "sample_idx" not in self.config:
+            raise VcfDedupInputError("Missing parameter 'sample_idx'")
         if self.config["variant_caller"] not in self.SUPPORTED_VARIANT_CALLERS:
             raise VcfDedupInputError("Non supported variant caller [%s]. The list of supported variant callers is %s" %
                                      (self.config["variant_caller"], ", ".join(self.SUPPORTED_VARIANT_CALLERS)))
