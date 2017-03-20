@@ -1,3 +1,9 @@
+version 0.1.4 (20 March 2017)
+----------------------------
+
+* Minor Changes:
+    - Bugfix in command line parameter `sample-idx`
+
 version 0.1.3 (20 March 2017)
 ----------------------------
 
