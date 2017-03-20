@@ -24,6 +24,11 @@ def main():
                              'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
                              'will be calculated on the sample indicated by this index.',
                         default=0)
+    parser.add_argument('--sample-name', metavar='sample_name',
+                        help='For multisample VCFs the sample name indicates the sample to be used to merge'
+                             'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
+                             'will be calculated on the indicated sample. NOTE: sample-name overrides sample-idx',
+                        default="")
     parser.add_argument('--verbose', action='store_true')
     parser.set_defaults(equality_mode="1")
     parser.set_defaults(sample_idx=0)
@@ -42,7 +47,8 @@ def main():
         "variant_caller": args.variant_caller,
         "selection_method": args.selection_method,
         "equality_mode": args.equality_mode,
-        "sample_idx": args.sample_idx
+        "sample_idx": args.sample_idx,
+        "sample_name": args.sample_name
     }
     # Calls the VCF dedupper
     runner = VcfDedupRunner(config)

@@ -1,5 +1,5 @@
 import unittest
-from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, DuplicationFinder
+from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, DuplicationFinder, VcfFormatError
 from vcf_dedup.tools.variant_comparer import VariantComparerNoAlternate, VariantComparerWithAlternate
 import logging
 
@@ -18,6 +18,24 @@ class VcfDedupTests(unittest.TestCase):
         output_vcf = "../resources/test1_0.vcf"
         vcf_transformer = StrelkaVcfDedupper(input_vcf, output_vcf, VariantComparerNoAlternate(), "af", 1)
         vcf_transformer.process_vcf()
+        del vcf_transformer
+
+    def test1_0_0(self):
+        input_vcf = self.strelka_vcf
+        output_vcf = "../resources/test1_0.vcf"
+        vcf_transformer = StrelkaVcfDedupper(input_vcf, output_vcf, VariantComparerNoAlternate(), "af", 1, "tumor")
+        vcf_transformer.process_vcf()
+        del vcf_transformer
+
+    def test1_0_1(self):
+        input_vcf = self.strelka_vcf
+        output_vcf = "../resources/test1_0.vcf"
+        vcf_transformer = StrelkaVcfDedupper(input_vcf, output_vcf, VariantComparerNoAlternate(), "af", 1, "none")
+        try:
+            vcf_transformer.process_vcf()
+            self.assertTrue(False)
+        except VcfFormatError:
+            self.assertTrue(True)
         del vcf_transformer
 
     def test1_1(self):

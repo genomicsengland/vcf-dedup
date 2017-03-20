@@ -3,8 +3,6 @@ import os.path
 import logging
 from abc import ABCMeta, abstractmethod
 import time
-import multiprocessing
-import itertools
 
 
 
@@ -101,16 +99,6 @@ class AbstractVcfTransformer(object):
         after = time.time()
         logging.info("Finished contig %s in %s seconds" % (contig, str(after - before)))
 
-
-    def _is_single_sample(self, variant):
-        """
-        Returns true if a given variant is single-sample. False for variant with no sample and false for multi-sample
-        variants
-        :param variant: the variants
-        :return:
-        """
-        return len(variant.samples) == 1
-
     @abstractmethod
     def _transform_variant(self, variant):
         pass
@@ -164,7 +152,7 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
     variants = []
 
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method):
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method, sample_idx = 0, sample_name = ""):
 
         # calls the parent constructor
         AbstractVcfTransformer.__init__(self, input_vcf_file, output_vcf_file)
@@ -177,6 +165,8 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
             self._select_variants = self._select_mode_quality
         elif selection_method == "arbitrary":
             self._select_variants = self._select_mode_arbitrary
+        self.sample_idx = sample_idx
+        self.sample_name = sample_name
 
     def _transform_variant(self, variant):
         """
@@ -301,6 +291,23 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
         return merged_variant
 
+    def _get_sample(self, variant):
+        """
+        Returns the sample identified by index or sample name.
+        :param variant:         the variant
+        :param sample_idx:      the index
+        :param sample_name:     the sample name
+        :return:                the selected sample
+        """
+        if self.sample_name is not None and self.sample_name != "":
+            samples = [sample for sample in variant.samples if sample.sample == self.sample_name]
+            if len(samples) == 0:
+                raise VcfFormatError("Sample '%s' is not available in the VCF" % self.sample_name)
+            sample = samples[0]
+        else:
+            sample = variant.samples[self.sample_idx]
+        return sample
+
 
 class StrelkaVcfDedupper(AbstractVcfDedupper):
     """
@@ -308,13 +315,6 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
     This class performs the merging of duplicated variants from Strelka.
     PRE: VCFs are single sample
     """
-
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method, sample_idx):
-
-        # calls the parent constructor
-        AbstractVcfDedupper.__init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method)
-        # stores the variant comparer
-        self.sample_idx = sample_idx
 
     def _calculate_AF(self, variant):
         """
@@ -328,7 +328,7 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
         """
         logging.debug("Calculating somatic ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
         af = 0
-        format = variant.samples[self.sample_idx].data._asdict()
+        format = self._get_sample(variant).data._asdict()
         if variant.is_snp:
             reference = str(variant.REF)
             # TODO: capture error when multiallelic gets here
@@ -388,7 +388,7 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
         """
         logging.debug("Calculating ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
         af = 0
-        format = variant.samples[0].data._asdict()
+        format = self._get_sample(variant).data._asdict()
         if ("AC" in format and len(format["AC"]) == 2):
             reference_ac = format["AC"][0]
             alternate_ac = format["AC"][1]
@@ -404,7 +404,7 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
         :return:            the variant calling quality
         """
         variant_calling_quality = 0
-        format = variant.samples[0].data._asdict()
+        format = self._get_sample(variant).data._asdict()
         if "GQX" in format:
             variant_calling_quality = format["GQX"]
         try:

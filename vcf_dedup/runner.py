@@ -29,6 +29,7 @@ class VcfDedupRunner(object):
             self.sample_idx = int(config["sample_idx"])
         except ValueError:
             raise VcfDedupInputError("'sample_idx' must be numeric")
+        self.sample_name = config["sample_name"]
 
     def sanity_checks(self):
         """
@@ -47,6 +48,8 @@ class VcfDedupRunner(object):
             raise VcfDedupInputError("Missing parameter 'equality_mode'")
         if "sample_idx" not in self.config:
             raise VcfDedupInputError("Missing parameter 'sample_idx'")
+        if "sample_name" not in self.config:
+            raise VcfDedupInputError("Missing parameter 'sample_name'")
         if self.config["variant_caller"] not in self.SUPPORTED_VARIANT_CALLERS:
             raise VcfDedupInputError("Non supported variant caller [%s]. The list of supported variant callers is %s" %
                                      (self.config["variant_caller"], ", ".join(self.SUPPORTED_VARIANT_CALLERS)))
@@ -72,13 +75,18 @@ class VcfDedupRunner(object):
                 self.output_vcf,
                 comparer,
                 self.selection_method,
-                self.sample_idx)
+                self.sample_idx,
+                self.sample_name
+            )
         elif self.variant_caller == "starling":
             transformer = StarlingVcfDedupper(
                 self.input_vcf,
                 self.output_vcf,
                 comparer,
-                self.selection_method)
+                self.selection_method,
+                self.sample_idx,
+                self.sample_name
+            )
         elif self.variant_caller == "duplication_finder":
             transformer = DuplicationFinder(
                 self.input_vcf,
