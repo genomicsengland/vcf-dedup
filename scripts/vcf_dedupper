@@ -46,7 +46,7 @@ def main():
     }
     # Calls the VCF dedupper
     runner = VcfDedupRunner(config)
-    runner.process_vcf()
+    runner.run()
 
 if __name__ == '__main__':
     main()

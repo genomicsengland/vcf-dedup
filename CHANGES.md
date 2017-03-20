@@ -1,3 +1,9 @@
+version 0.1.2 (20 March 2017)
+----------------------------
+
+* Minor Changes:
+    - Fixed bug on script `vcf-dedupper`
+
 version 0.1.1 (18 March 2017)
 ----------------------------
 
