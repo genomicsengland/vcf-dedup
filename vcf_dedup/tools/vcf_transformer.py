@@ -3,6 +3,7 @@ import os.path
 import logging
 from abc import ABCMeta, abstractmethod
 import time
+import sys
 
 
 
@@ -40,8 +41,11 @@ class AbstractVcfTransformer(object):
             raise ValueError("Input VCF file does not exist!")
         # loads writer
         try:
-            self.output_vcf_file = output_vcf_file
-            self.writer = vcf.VCFWriter(open(self.output_vcf_file, 'w'), self.reader)
+            if output_vcf_file is None or output_vcf_file == "":
+                output_vcf = sys.stdout
+            else:
+                output_vcf = open(output_vcf_file, 'w')
+            self.writer = vcf.VCFWriter(output_vcf, self.reader)
         except Exception, e:
             logging.error("Error opening output VCF file: " + str(e))
             raise ValueError("Error opening output VCF file: " + str(e))

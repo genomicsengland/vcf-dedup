@@ -8,7 +8,7 @@ def main():
 
     parser = argparse.ArgumentParser(description = 'VCF variant duplication removal')
     parser.add_argument('--input-vcf', metavar='input_vcf', help = 'The input VCF compressed or not [required]', required = True)
-    parser.add_argument('--output-vcf', metavar='output_vcf', help='The output VCF [required]', required=True)
+    parser.add_argument('--output-vcf', metavar='output_vcf', help='The output VCF. If not provided it will write to standard output', default=None)
     parser.add_argument('--variant-caller', metavar='variant_caller',
                         help='The variant caller used to generate the input VCF. One of "strelka", '
                              '"starling", "platypus", "duplication_finder" [required]', required=True)

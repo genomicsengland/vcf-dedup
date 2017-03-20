@@ -38,6 +38,13 @@ class VcfDedupTests(unittest.TestCase):
             self.assertTrue(True)
         del vcf_transformer
 
+    def test1_0_2(self):
+        input_vcf = self.strelka_vcf
+        output_vcf = "../resources/test1_0_2.vcf"
+        vcf_transformer = StrelkaVcfDedupper(input_vcf, None, VariantComparerNoAlternate(), "af", 1)
+        vcf_transformer.process_vcf()
+        del vcf_transformer
+
     def test1_1(self):
         input_vcf = self.strelka_vcf
         output_vcf = "../resources/test1_1.vcf"
