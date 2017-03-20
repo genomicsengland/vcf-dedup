@@ -25,7 +25,10 @@ class VcfDedupRunner(object):
         self.variant_caller = config["variant_caller"]
         self.selection_method = config["selection_method"]
         self.equality_mode = config["equality_mode"]
-        self.sample_idx = config["sample_idx"]
+        try:
+            self.sample_idx = int(config["sample_idx"])
+        except ValueError:
+            raise VcfDedupInputError("'sample_idx' must be numeric")
 
     def sanity_checks(self):
         """
