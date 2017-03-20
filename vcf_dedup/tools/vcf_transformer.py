@@ -343,14 +343,13 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
             if ("TIR" in format and "TAR" in format):
                 indel_ac = format["TIR"][0]
                 alternate_ac = format["TAR"][0]
-                af = indel_ac / (alternate_ac + indel_ac) if alternate_ac + indel_ac > 0 else 0
+                af = float(indel_ac) / (alternate_ac + indel_ac) if alternate_ac + indel_ac > 0 else 0
         elif variant.is_sv:
             # TODO: what should we do with these ones?
             pass
         else:
             # TODO: will this ever happen?
             pass
-
         return af
 
     def _get_variant_calling_quality(self, variant):
@@ -392,7 +391,7 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
         if ("AC" in format and len(format["AC"]) == 2):
             reference_ac = format["AC"][0]
             alternate_ac = format["AC"][1]
-            af = alternate_ac / (alternate_ac + reference_ac) if alternate_ac + reference_ac > 0 else 0
+            af = float(alternate_ac) / (alternate_ac + reference_ac) if alternate_ac + reference_ac > 0 else 0
         return af
 
     def _get_variant_calling_quality(self, variant):

@@ -22,14 +22,14 @@ class VcfDedupTests(unittest.TestCase):
 
     def test1_0_0(self):
         input_vcf = self.strelka_vcf
-        output_vcf = "../resources/test1_0.vcf"
+        output_vcf = "../resources/test1_0_0.vcf"
         vcf_transformer = StrelkaVcfDedupper(input_vcf, output_vcf, VariantComparerNoAlternate(), "af", 1, "tumor")
         vcf_transformer.process_vcf()
         del vcf_transformer
 
     def test1_0_1(self):
         input_vcf = self.strelka_vcf
-        output_vcf = "../resources/test1_0.vcf"
+        output_vcf = "../resources/test1_0_1.vcf"
         vcf_transformer = StrelkaVcfDedupper(input_vcf, output_vcf, VariantComparerNoAlternate(), "af", 1, "none")
         try:
             vcf_transformer.process_vcf()
