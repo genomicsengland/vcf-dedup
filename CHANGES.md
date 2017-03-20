@@ -1,4 +1,4 @@
-version 0.1.2 (20 March 2017)
+version 0.1.3 (20 March 2017)
 ----------------------------
 
 * Minor Changes:
