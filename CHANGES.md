@@ -1,3 +1,11 @@
+version 0.2.0 (20 March 2017)
+----------------------------
+
+* Major Changes:
+    - `sample-name` parameter added in addition to `sample-idx`
+    - When output is not provdied it writes to standard output
+    - Fixed bug when calculating allele frequencies
+
 version 0.1.5 (20 March 2017)
 ----------------------------
 
