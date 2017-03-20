@@ -309,12 +309,12 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
     PRE: VCFs are single sample
     """
 
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method, tumor_sample_idx):
+    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method, sample_idx):
 
         # calls the parent constructor
         AbstractVcfDedupper.__init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method)
         # stores the variant comparer
-        self.tumor_sample_idx = tumor_sample_idx
+        self.sample_idx = sample_idx
 
     def _calculate_AF(self, variant):
         """
@@ -328,7 +328,7 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
         """
         logging.debug("Calculating somatic ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
         af = 0
-        format = variant.samples[self.tumor_sample_idx].data._asdict()
+        format = variant.samples[self.sample_idx].data._asdict()
         if variant.is_snp:
             reference = str(variant.REF)
             # TODO: capture error when multiallelic gets here

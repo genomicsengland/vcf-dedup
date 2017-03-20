@@ -69,7 +69,7 @@ class VcfDedupRunner(object):
                 self.output_vcf,
                 comparer,
                 self.selection_method,
-                self.tumor_sample_idx)
+                self.sample_idx)
         elif self.variant_caller == "starling":
             transformer = StarlingVcfDedupper(
                 self.input_vcf,
