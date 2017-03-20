@@ -283,6 +283,12 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :param variants:
         :return: the merged variant
         """
+        logging.debug("Merging duplicate variants at %s:%s:%s>%s" % (
+            variants[0].CHROM,
+            int(variants[0].POS),
+            variants[0].REF,
+            variants[0].ALT
+        ))
         merged_variant = None
         # gets all passed variants
         passed_variants = [variant for variant in variants if len(variant.FILTER) == 0]

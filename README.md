@@ -36,6 +36,8 @@ The `equality-mode` may be changed to use a less restrictive definition of dupli
 
 The `sample-idx` indicates as a 0-based index for multisample VCFs the sample to which collision criteria will be applied. Beware that for Strelka VCFs the tumor sample is in the second sample (i.e.: index = 1), this might change.
 
+The `sample-name` indicates the name of the sample to which collision criteria will be applied. This parameter overrides `sample-idx`. If the sample name does not exist an error is raised.
+
 ### Python module
 
 ```
@@ -54,3 +56,21 @@ config = {
 runner = VcfDedupRunner(config)
 runner.process_vcf()
 ```
+
+### Output
+
+If the parameter `output-vcf` is provided this file will be created.
+If the parameter `output-vcf` is not provided the resulting VCF will be written to the standard output.
+
+### Sample commands
+
+For strelka it is agreed to run the following command:
+```
+/genomes/software/apps/vcf-dedup/scripts/vcf_dedupper --input-vcf $file --output-vcf ${WORKING_FOLDER}/${filename}.dedupped.vcf --variant-caller strelka --selection-method af --equality-mode 1 --sample-idx 1 2> ${WORKING_FOLDER}/${filename}.log
+```
+
+For Starling it is agreed to run the following commands:
+```
+/genomes/software/apps/vcf-dedup/scripts/vcf_dedupper --input-vcf $file --output-vcf ${WORKING_FOLDER}/${filename}.dedupped.vcf --variant-caller starling --selection-method quality --equality-mode 1 2> ${WORKING_FOLDER}/${filename}.log
+```
+
