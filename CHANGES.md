@@ -1,3 +1,9 @@
+version 0.1.5 (20 March 2017)
+----------------------------
+
+* Minor Changes:
+    - `sample-idx` must be forced to numeric
+
 version 0.1.4 (20 March 2017)
 ----------------------------
 
