@@ -1,2 +1,6 @@
 *.pyc
+dist
+vcf_dedup.egg-info
+.idea
+
 
