@@ -108,7 +108,18 @@ class AbstractVcfTransformer(object):
         pass
 
     def _write_last_block(self):
-        pass
+        """
+        Writes the last block stored in self.variants
+        :return:
+        """
+        if len(self.variants) > 1:
+            # writes merged variant
+            self.writer.write_record(self._merge_variants(self.variants))
+        else:
+            # writes the variant when there is no duplication
+            self.writer.write_record(self.variants[0])
+        # clears it
+        self.variants = []
 
 
 class DuplicationFinder(AbstractVcfTransformer):
@@ -197,20 +208,6 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         # current variant forms part of the same block, stores and continues
         else:
             self.variants.append(variant)
-
-    def _write_last_block(self):
-        """
-        Writes the last block stored in self.variants
-        :return:
-        """
-        if len(self.variants) > 1:
-            # writes merged variant
-            self.writer.write_record(self._merge_variants(self.variants))
-        else:
-            # writes the variant when there is no duplication
-            self.writer.write_record(self.variants[0])
-        # clears it
-        self.variants = []
 
     @abstractmethod
     def _calculate_AF(self, variant):

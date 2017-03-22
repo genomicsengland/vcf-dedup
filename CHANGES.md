@@ -1,3 +1,9 @@
+version 0.2.1 (22 March 2017)
+----------------------------
+
+* Minor Changes:
+    - `duplication_finder` failed to write last set of duplicates.
+
 version 0.2.0 (20 March 2017)
 ----------------------------
 

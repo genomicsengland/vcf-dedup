@@ -66,11 +66,16 @@ If the parameter `output-vcf` is not provided the resulting VCF will be written 
 
 For strelka it is agreed to run the following command:
 ```
-/genomes/software/apps/vcf-dedup/scripts/vcf_dedupper --input-vcf $file --output-vcf ${WORKING_FOLDER}/${filename}.dedupped.vcf --variant-caller strelka --selection-method af --equality-mode 1 --sample-idx 1 2> ${WORKING_FOLDER}/${filename}.log
+vcf_dedupper --input-vcf $file --output-vcf ${file}.dedupped.vcf --variant-caller strelka --selection-method af --equality-mode 1 --sample-idx 1 2> ${file}.log
 ```
 
 For Starling it is agreed to run the following commands:
 ```
-/genomes/software/apps/vcf-dedup/scripts/vcf_dedupper --input-vcf $file --output-vcf ${WORKING_FOLDER}/${filename}.dedupped.vcf --variant-caller starling --selection-method quality --equality-mode 1 2> ${WORKING_FOLDER}/${filename}.log
+vcf_dedupper --input-vcf $file --output-vcf ${file}.dedupped.vcf --variant-caller starling --selection-method quality --equality-mode 1 2> ${file}.log
+```
+
+For the `duplication_finder` run the following command:
+```
+vcf_dedupper --input-vcf $file --output-vcf ${file}.duplications.vcf --variant-caller duplication_finder --selection-method af 2> ${file}.log
 ```
 
