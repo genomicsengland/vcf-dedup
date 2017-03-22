@@ -108,18 +108,9 @@ class AbstractVcfTransformer(object):
         pass
 
     def _write_last_block(self):
-        """
-        Writes the last block stored in self.variants
-        :return:
-        """
-        if len(self.variants) > 1:
-            # writes merged variant
-            self.writer.write_record(self._merge_variants(self.variants))
-        else:
-            # writes the variant when there is no duplication
-            self.writer.write_record(self.variants[0])
-        # clears it
-        self.variants = []
+        pass
+
+
 
 
 class DuplicationFinder(AbstractVcfTransformer):
@@ -161,6 +152,18 @@ class DuplicationFinder(AbstractVcfTransformer):
         # current variant forms part of the same block, stores and continues
         else:
             self.variants.append(variant)
+
+    def _write_last_block(self):
+        """
+        Writes the last block stored in self.variants
+        :return:
+        """
+        if len(self.variants) > 1:
+            # writes merged variant
+            for variant in self.variants:
+                self.writer.write_record(variant)
+        # clears it
+        self.variants = []
 
 
 class AbstractVcfDedupper(AbstractVcfTransformer):
@@ -315,6 +318,20 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
             sample = variant.samples[self.sample_idx]
         return sample
 
+    def _write_last_block(self):
+        """
+        Writes the last block stored in self.variants
+        :return:
+        """
+        if len(self.variants) > 1:
+            # writes merged variant
+            self.writer.write_record(self._merge_variants(self.variants))
+        else:
+            # writes the variant when there is no duplication
+            self.writer.write_record(self.variants[0])
+        # clears it
+        self.variants = []
+
 
 class StrelkaVcfDedupper(AbstractVcfDedupper):
     """
@@ -343,13 +360,13 @@ class StrelkaVcfDedupper(AbstractVcfDedupper):
             if reference + "U" in format and alternate + "U" in format:
             # TODO: capture error when no samples available
             # TODO: consider case when multiple samples are available
-                reference_ac = format[reference + "U"][0]
-                alternate_ac = format[alternate + "U"][0]
+                reference_ac = int(format[reference + "U"][0])
+                alternate_ac = int(format[alternate + "U"][0])
                 af = alternate_ac / (alternate_ac + reference_ac) if alternate_ac + reference_ac > 0 else 0
         elif variant.is_indel:
             if ("TIR" in format and "TAR" in format):
-                indel_ac = format["TIR"][0]
-                alternate_ac = format["TAR"][0]
+                indel_ac = int(format["TIR"][0])
+                alternate_ac = int(format["TAR"][0])
                 af = float(indel_ac) / (alternate_ac + indel_ac) if alternate_ac + indel_ac > 0 else 0
         elif variant.is_sv:
             # TODO: what should we do with these ones?
@@ -395,9 +412,9 @@ class StarlingVcfDedupper(AbstractVcfDedupper):
         logging.debug("Calculating ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
         af = 0
         format = self._get_sample(variant).data._asdict()
-        if ("AC" in format and len(format["AC"]) == 2):
-            reference_ac = format["AC"][0]
-            alternate_ac = format["AC"][1]
+        if ("AD" in format and len(format["AD"]) == 2):
+            reference_ac = int(format["AD"][0])
+            alternate_ac = int(format["AD"][1])
             af = float(alternate_ac) / (alternate_ac + reference_ac) if alternate_ac + reference_ac > 0 else 0
         return af
 

@@ -1,3 +1,10 @@
+version 0.2.2 (22 March 2017)
+----------------------------
+
+* Minor Changes:
+    - `duplication_finder` failed to write properly last set of duplicates.
+    - Fixed bug in calculation of allele frequencies for Starling. We were using AC, which did not exist, instead of AD.
+
 version 0.2.1 (22 March 2017)
 ----------------------------
 
