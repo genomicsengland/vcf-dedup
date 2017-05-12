@@ -6,7 +6,6 @@ import time
 import sys
 
 
-
 class VcfFormatError(Exception):
     """
     A exception to raise when VCF format errors are found

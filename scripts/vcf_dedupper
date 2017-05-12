@@ -29,6 +29,16 @@ def main():
                              'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
                              'will be calculated on the indicated sample. NOTE: sample-name overrides sample-idx',
                         default="")
+    parser.add_argument('--sort-threads', metavar='sort_threads',
+                        help='The number of threads that UNIX sort will use.',
+                        default="1")
+    parser.add_argument('--sort-tmp-folder', metavar='temp_folder',
+                        help='The temporary folder that UNIX sort will use (default: output folder).',
+                        default="")
+    parser.add_argument('--sort',
+                        help='Sorts the VCF before dedupping. Beware that VCF needs to be sorted considering '
+                             'chromosome, position, reference and alternate bases.',
+                        action='store_true')
     parser.add_argument('--verbose', action='store_true')
     parser.set_defaults(equality_mode="1")
     parser.set_defaults(sample_idx=0)
@@ -48,7 +58,10 @@ def main():
         "selection_method": args.selection_method,
         "equality_mode": args.equality_mode,
         "sample_idx": args.sample_idx,
-        "sample_name": args.sample_name
+        "sample_name": args.sample_name,
+        "sort_vcf": args.sort,
+        "sort_threads": args.sort_threads,
+        "temp_folder": args.temp_folder
     }
     # Calls the VCF dedupper
     runner = VcfDedupRunner(config)

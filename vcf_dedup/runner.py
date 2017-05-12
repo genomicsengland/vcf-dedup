@@ -1,6 +1,8 @@
 import logging
 from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, DuplicationFinder
 from vcf_dedup.tools.variant_comparer import VariantComparerNoAlternate, VariantComparerWithAlternate
+from vcf_dedup.tools.vcf_sorter import VcfSorter
+import os
 
 
 class VcfDedupInputError(Exception):
@@ -30,6 +32,19 @@ class VcfDedupRunner(object):
         except ValueError:
             raise VcfDedupInputError("'sample_idx' must be numeric")
         self.sample_name = config["sample_name"]
+        try:
+            self.sort_vcf = bool(config["sort_vcf"])
+        except ValueError:
+            raise VcfDedupInputError("'sort_vcf' must be boolean")
+        try:
+            self.sort_threads = int(config["sort_threads"])
+            if self.sort_threads < 1:
+                raise VcfDedupInputError("'sort_threads' must be positive and greater than zero [%s]" %
+                                         str(self.sort_threads))
+        except ValueError:
+            raise VcfDedupInputError("'sort_threads' must be numeric")
+        self.temp_folder = config["temp_folder"] if config["temp_folder"] != "" else \
+            os.path.dirname(os.path.realpath(self.output_vcf))
 
     def sanity_checks(self):
         """
@@ -50,6 +65,12 @@ class VcfDedupRunner(object):
             raise VcfDedupInputError("Missing parameter 'sample_idx'")
         if "sample_name" not in self.config:
             raise VcfDedupInputError("Missing parameter 'sample_name'")
+        if "sort_vcf" not in self.config:
+            raise VcfDedupInputError("Missing parameter 'sort_vcf'")
+        if "sort_threads" not in self.config:
+            raise VcfDedupInputError("Missing parameter 'sort_threads'")
+        if "temp_folder" not in self.config:
+            raise VcfDedupInputError("Missing parameter 'temp_folder'")
         if self.config["variant_caller"] not in self.SUPPORTED_VARIANT_CALLERS:
             raise VcfDedupInputError("Non supported variant caller [%s]. The list of supported variant callers is %s" %
                                      (self.config["variant_caller"], ", ".join(self.SUPPORTED_VARIANT_CALLERS)))
@@ -61,8 +82,21 @@ class VcfDedupRunner(object):
                 "Non supported variant equality method [%s]. The list of supported equality methods is %s" %
                 (self.config["variant_caller"], ", ".join(self.SUPPORTED_EQUALITY_MODES)))
 
+    def __sort(self):
+        logging.info("Sorts the VCF before processing...")
+        input_basename = os.path.splitext(os.path.basename(self.input_vcf))[0]
+        self.sorted_vcf = os.path.join(self.temp_folder, "." + input_basename + ".sorted.vcf")
+        vcf_sorter = VcfSorter(self.input_vcf, self.sorted_vcf, temp_folder=self.temp_folder, threads=self.sort_threads)
+        vcf_sorter.sort()
+
     def run(self):
         logging.info("Starting the VCF duplication removal...")
+        if self.sort_vcf:
+            # sorts the input VCF
+            self.__sort()
+        else:
+            # assumes input is sorted
+            self.sorted_vcf = self.input_vcf
         # selects the appropriate comparer
         if self.equality_mode == "1":
             comparer = VariantComparerWithAlternate()
@@ -71,7 +105,7 @@ class VcfDedupRunner(object):
         # selects the appropriate transformer
         if self.variant_caller == "strelka":
             transformer = StrelkaVcfDedupper(
-                self.input_vcf,
+                self.sorted_vcf,
                 self.output_vcf,
                 comparer,
                 self.selection_method,
@@ -80,7 +114,7 @@ class VcfDedupRunner(object):
             )
         elif self.variant_caller == "starling":
             transformer = StarlingVcfDedupper(
-                self.input_vcf,
+                self.sorted_vcf,
                 self.output_vcf,
                 comparer,
                 self.selection_method,
@@ -89,9 +123,13 @@ class VcfDedupRunner(object):
             )
         elif self.variant_caller == "duplication_finder":
             transformer = DuplicationFinder(
-                self.input_vcf,
+                self.sorted_vcf,
                 self.output_vcf,
                 comparer)
         # run the transformation
         transformer.process_vcf()
+        # delete temporary files
+        if self.sort_vcf:
+            os.remove(self.sorted_vcf)
+        logging.info("Duplication removal finished!")
 
