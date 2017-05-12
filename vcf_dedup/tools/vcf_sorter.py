@@ -1,7 +1,5 @@
 import logging
 import os
-import sys
-from subprocess import call
 
 
 class VcfSorter(object):

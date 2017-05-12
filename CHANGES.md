@@ -1,3 +1,14 @@
+version 0.3.0 (12 May 2017)
+----------------------------
+
+* Major Changes:
+    - Option to sort the input VCF by chromosome, position, reference and alternate bases
+    - Platypus is now supported
+    - Additional selection method `allele_calls`. This selection method is not available as it does not report genotypes.
+
+* Minor changes
+    - Duplicated variants are now written into file `${output_vcf}.duplicated.vcf`
+
 version 0.2.2 (22 March 2017)
 ----------------------------
 

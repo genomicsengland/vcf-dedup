@@ -195,6 +195,8 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
             self._select_variants = self._select_mode_af
         elif selection_method == "quality":
             self._select_variants = self._select_mode_quality
+        elif selection_method == "allele_calls":
+            self._select_variants = self._select_mode_allele_calls
         elif selection_method == "arbitrary":
             self._select_variants = self._select_mode_arbitrary
         self.sample_idx = sample_idx
@@ -236,6 +238,29 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
     @abstractmethod
     def _get_variant_calling_quality(self, variant):
         pass
+
+    def _select_mode_allele_calls(self, variants):
+        """
+        Returns the variants with the highest allele frequency
+        :param variants:
+        :return:
+        """
+        allele_calls = {variant: self._calculate_allele_calls(variant)
+                              for variant in variants}
+        max_ac = allele_calls[max(allele_calls, key=allele_calls.get)]
+        max_acs = [i for i, x in allele_calls.iteritems() if x == max_ac]
+        if (len(max_acs) > 1):
+            # collision with maximum allele call
+            afs = {variant: self._calculate_AF(variant)
+                                  for variant in variants}
+            max_af = afs[max(afs, key=afs.get)]
+            max_afs = [i for i, x in afs.iteritems() if x == max_af]
+            # gets the first
+            merged_variant = max_afs[0]
+        else:
+            merged_variant = max_acs[0]
+
+        return merged_variant
 
     def _select_mode_af(self, variants):
         """
@@ -352,6 +377,20 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         # clears it
         self.variants = []
 
+    def _calculate_allele_calls(self, variant):
+        """
+        Return the ratio of allele calls for the alternate allele.
+        :param variant:
+        :return:
+        """
+        logging.debug("Calculating ratio of alternate genotypes for %s:%s" % (variant.CHROM, str(variant.POS)))
+        alternate_alleles = 0
+        total_alleles = 0
+        for sample in variant.samples:
+            alternate_alleles += sample.gt_alleles.count('1')
+            total_alleles += len(sample.gt_alleles)
+        return float(alternate_alleles) / total_alleles
+
 
 class StrelkaVcfDedupper(AbstractVcfDedupper):
     """
@@ -464,13 +503,32 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
     PRE: VCFs are multi-sample
     """
 
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method):
+    def _calculate_AF(self, variant):
         """
-
-        :param variants:
+        Return the ratio of supporting reads for variants called by Platypus
+        For SNVs and indels: TR / TC
+        :param variant:
         :return:
         """
-        raise NotImplemented()
+        logging.debug("Calculating ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
+        af = 0
+        if ("TC" in variant.INFO and "TR" in variant.INFO):
+            total_ac = int(variant.INFO["TC"])
+            alternate_ac = int(variant.INFO["TR"])
+            af = float(alternate_ac) / (total_ac)
+        return af
+
+    def _get_variant_calling_quality(self, variant):
+        """
+        Retrieves the variant calling quality from the QD info field
+        'Variant-quality/read-depth for this variant'
+        :param variant:     the variant
+        :return:            the variant calling quality
+        """
+        variant_calling_quality = 0
+        if "QD" in variant.INFO:
+            variant_calling_quality = variant.INFO["QD"]
+        return variant_calling_quality
 
 
 

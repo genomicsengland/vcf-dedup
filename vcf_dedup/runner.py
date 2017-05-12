@@ -1,5 +1,6 @@
 import logging
-from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, DuplicationFinder
+from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, \
+    DuplicationFinder, PlatypusVcfDedupper
 from vcf_dedup.tools.variant_comparer import VariantComparerNoAlternate, VariantComparerWithAlternate
 from vcf_dedup.tools.vcf_sorter import VcfSorter
 import os
@@ -13,9 +14,9 @@ class VcfDedupRunner(object):
 
     # TODO: add the rare diseases caller here, platypus?
     # TODO: add others
-    SUPPORTED_VARIANT_CALLERS = ["strelka", "starling", "duplication_finder"]
+    SUPPORTED_VARIANT_CALLERS = ["strelka", "starling", "duplication_finder", "platypus"]
     SUPPORTED_EQUALITY_MODES = ["1", "2"]
-    SUPPORTED_SELECTION_METHODS = ["af", "quality", "arbitrary"]
+    SUPPORTED_SELECTION_METHODS = ["af", "quality", "arbitrary", "allele_calls"]
 
     def __init__(self, config):
         self.config = config
@@ -81,6 +82,8 @@ class VcfDedupRunner(object):
             raise VcfDedupInputError(
                 "Non supported variant equality method [%s]. The list of supported equality methods is %s" %
                 (self.config["variant_caller"], ", ".join(self.SUPPORTED_EQUALITY_MODES)))
+        if self.config["variant_caller"] == "strelka" and self.config["selection_method"] == "allele_calls":
+            raise VcfDedupInputError("Non supported selection method for Strelka which has no genotypes")
 
     def __sort(self):
         logging.info("Sorts the VCF before processing...")
@@ -114,6 +117,15 @@ class VcfDedupRunner(object):
             )
         elif self.variant_caller == "starling":
             transformer = StarlingVcfDedupper(
+                self.sorted_vcf,
+                self.output_vcf,
+                comparer,
+                self.selection_method,
+                self.sample_idx,
+                self.sample_name
+            )
+        elif self.variant_caller == "platypus":
+            transformer = PlatypusVcfDedupper(
                 self.sorted_vcf,
                 self.output_vcf,
                 comparer,

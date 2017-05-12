@@ -14,7 +14,7 @@ def main():
                              '"starling", "platypus", "duplication_finder" [required]', required=True)
     parser.add_argument('--selection-method', metavar='selection_method',
                         help='The selection method for ties in filtering status between duplicated variants. One of "af", '
-                             '"quality", "arbitrary" [required]', required=True)
+                             '"quality", "allele_calls", "arbitrary" [required]', required=True)
     parser.add_argument('--equality-mode', metavar='equality_mode',
                         help='The mode to find equal variants. "1": chromosome, position, reference and alternate must '
                              'be equal; "2": chromosome, position and reference must be equal [required]',
@@ -42,6 +42,8 @@ def main():
     parser.add_argument('--verbose', action='store_true')
     parser.set_defaults(equality_mode="1")
     parser.set_defaults(sample_idx=0)
+    parser.set_defaults(sort_threads="1")
+    parser.set_defaults(temp_folder="")
 
 
     args = parser.parse_args()
