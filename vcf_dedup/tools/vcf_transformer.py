@@ -48,6 +48,21 @@ class AbstractVcfTransformer(object):
         except Exception, e:
             logging.error("Error opening output VCF file: " + str(e))
             raise ValueError("Error opening output VCF file: " + str(e))
+        # loads writer for duplicated variants
+        try:
+            if output_vcf_file is None or output_vcf_file == "":
+                output_duplicated_vcf = sys.stderr
+            else:
+                duplicated_vcf_file = os.path.join(
+                    os.path.dirname(os.path.realpath(output_vcf_file)),
+                    os.path.splitext(os.path.basename(output_vcf_file))[0] + ".duplicated.vcf"
+                )
+                output_duplicated_vcf = open(duplicated_vcf_file, 'w')
+            self.writer_duplicated = vcf.VCFWriter(output_duplicated_vcf, self.reader)
+        except Exception, e:
+            logging.error("Error opening output VCF file: " + str(e))
+            raise ValueError("Error opening output VCF file: " + str(e))
+
         logging.info("Initialised!")
 
     def __del__(self):
@@ -202,6 +217,9 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
             if len(self.variants) > 1:
                 # writes merged variant
                 self.writer.write_record(self._merge_variants(self.variants))
+                # writes to VCF of duplicated variants
+                for duplicated_variant in self.variants:
+                    self.writer_duplicated.write_record(duplicated_variant)
             else:
                 # writes the variant when there is no duplication
                 self.writer.write_record(self.variants[0])
@@ -325,6 +343,9 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         if len(self.variants) > 1:
             # writes merged variant
             self.writer.write_record(self._merge_variants(self.variants))
+            # writes duplictade variants
+            for duplicated_variant in self.variants:
+                self.writer_duplicated.write_record(duplicated_variant)
         else:
             # writes the variant when there is no duplication
             self.writer.write_record(self.variants[0])
