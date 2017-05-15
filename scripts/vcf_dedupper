@@ -49,7 +49,7 @@ def main():
     args = parser.parse_args()
 
     # Sets logging level
-    logging.basicConfig(level = 10 if args.verbose else 20)
+    logging.basicConfig(level = 20 if args.verbose else 40)
 
     # Creates a data structure with all config parameters
     config = {
