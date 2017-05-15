@@ -514,7 +514,8 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
         af = 0
         if ("TC" in variant.INFO and "TR" in variant.INFO):
             total_ac = int(variant.INFO["TC"])
-            alternate_ac = int(variant.INFO["TR"])
+            # NOTE: we assume that multi-allelic variants do not reach this stage in normalisation pipeline
+            alternate_ac = int(variant.INFO["TR"][0])
             af = float(alternate_ac) / (total_ac)
         return af
 
