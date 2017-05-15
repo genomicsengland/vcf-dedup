@@ -45,7 +45,8 @@ class VcfDedupRunner(object):
         except ValueError:
             raise VcfDedupInputError("'sort_threads' must be numeric")
         self.temp_folder = config["temp_folder"] if config["temp_folder"] != "" else \
-            os.path.dirname(os.path.realpath(self.output_vcf))
+            os.path.dirname(os.path.realpath(self.output_vcf if self.output_vcf is not None and self.output_vcf != ""
+                                             else self.input_vcf))
 
     def sanity_checks(self):
         """
