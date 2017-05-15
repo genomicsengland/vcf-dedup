@@ -68,17 +68,23 @@ runner.process_vcf()
 * If the parameter `output-vcf` is provided this file will be created.
 * If the parameter `output-vcf` is not provided the resulting VCF will be written to the standard output.
 * The duplicated variants will be written in `${output-vcf}.duplicated.vcf` if `output-vcf` is provided, otherwise they will be written to the standard error.
+* If the parameter `--verbose` is provided logs will be written to the standard error. Beware that logs and the duplicated variants might be both written to the standard error.
 
 ### Sample commands
 
 For strelka it is agreed to run the following command:
 ```
-vcf_dedupper --input-vcf $file --output-vcf ${file}.dedupped.vcf --variant-caller strelka --selection-method af --equality-mode 1 --sample-idx 1  --sort --sort-threads 2 2> ${file}.log
+vcf_dedupper --input-vcf $file --output-vcf ${file}.dedupped.vcf --variant-caller strelka --selection-method af --equality-mode 1 --sample-idx 1  --sort 2> ${file}.duplications.vcf  | bgzip > ${file}.dedupped.vcf.gz
 ```
 
 For Starling it is agreed to run the following commands:
 ```
-vcf_dedupper --input-vcf $file --output-vcf ${file}.dedupped.vcf --variant-caller starling --selection-method quality --equality-mode 1 --sort --sort-threads 2 2> ${file}.log
+vcf_dedupper --input-vcf $file --output-vcf ${file}.dedupped.vcf --variant-caller starling --selection-method quality --equality-mode 1 --sort 2> ${file}.duplications.vcf  | bgzip > ${file}.dedupped.vcf.gz
+```
+
+For Platypus it is agreed to run the following command:
+```
+vcf_dedupper --input-vcf $file --variant-caller platypus --selection-method allele_calls --equality-mode 1 --sort 2> ${file}.duplications.vcf  | bgzip > ${file}.dedupped.vcf.gz
 ```
 
 For the `duplication_finder` run the following command:
