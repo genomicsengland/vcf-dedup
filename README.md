@@ -8,10 +8,38 @@ The currrent implementation takes into account:
 1. The filtering information. Whenever there is one and only one variant non filtered (i.e.: PASS) This will be the resulting variant.
 2. Other criteria are used when there is a collision in filtering status (i.e.: two or more non filtered variants or all filtered variants). This is set with `--selection-method`
     * Highest allele frequency (i.e.: ratio of supporting reads for the variant call)
-    * Highest variant calling quality.
+      - if there is a tie, it selects the variant with the highest variant calling quality
+      - if there is a tie again, it selects an arbitrary variant
+    * Highest variant calling quality
+      - if there is a tie, it selects the variant with the highest allele frequency
+      - if there is a tie again, it selects an arbitrary variant
     * Greater number of allele calls
+      - if there is a tie, it selects the variant with the highest allele frequency
+      - if there is a tie again, it selects an arbitrary variant
     
 The output VCF should not contain any duplicate.
+
+## Support for different variant callers
+
+The number of allele calls is calculated equally for all supported variant callers based on the genotypes called.
+
+### Strelka 
+
+* Allele frequency
+   - For SNVs: `FORMAT[alternate_base + "U"] / (FORMAT[alternate_base + "U"] + FORMAT[reference_base + "U"])`
+   - For indels: `FORMAT["TIR"] / (FORMAT["TIR"] + FORMAT["TAR"])`
+* Variant calling quality: `INFO["VQSR"]`
+
+### Starling
+
+* Allele frequency: `format["AD"][1] / (format["AD"][1] + format["AD"][0])`
+* Variant calling quality: `format["GQX"]`
+
+### Platypus
+
+* Allele frequency: `INFO["TR"][0] / INFO["TC"]`
+* Variant calling quality: `INFO["QD"]`
+
 
 ## Assumptions
 
