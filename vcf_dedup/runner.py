@@ -141,6 +141,8 @@ class VcfDedupRunner(object):
                 comparer)
         # run the transformation
         transformer.process_vcf()
+        # forces closing the resources
+        transformer.__del__()
         # delete temporary files
         if self.sort_vcf:
             os.remove(self.sorted_vcf)
