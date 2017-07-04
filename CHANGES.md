@@ -1,3 +1,10 @@
+version 0.3.1 (5 Jul 2017)
+----------------------------
+
+* Minor changes
+    - Making sure the writers are flushed and closed.
+
+
 version 0.3.0 (12 May 2017)
 ----------------------------
 
