@@ -73,6 +73,8 @@ class AbstractVcfTransformer(object):
         logging.info("Closing the VCF writer...")
         self.writer.flush()
         self.writer.close()
+        self.writer_duplicated.flush()
+        self.writer_duplicated.close()
         logging.info("Resources closed!")
 
     def process_vcf(self):
