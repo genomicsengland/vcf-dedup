@@ -2,5 +2,6 @@
 dist
 vcf_dedup.egg-info
 .idea
+resources/output
 
 
