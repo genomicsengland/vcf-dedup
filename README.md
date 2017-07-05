@@ -123,7 +123,7 @@ vcf_dedupper --input-vcf $file --variant-caller platypus --selection-method alle
 
 For the generic variant caller it is agreed to run the following command:
 ```
-vcf_dedupper --input-vcf $file --variant-caller generic --selection-method af --equality-mode 1 --sort 2> ${file}.duplications.vcf  | bgzip > ${file}.dedupped.vcf.gz
+vcf_dedupper --input-vcf $file --variant-caller generic --selection-method af|quality  --equality-mode 1 --sort 2> ${file}.duplications.vcf  | bgzip > ${file}.dedupped.vcf.gz
 ```
 
 For the `duplication_finder` run the following command:
