@@ -1,8 +1,9 @@
 import logging
 from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, \
-    DuplicationFinder, PlatypusVcfDedupper
+    DuplicationFinder, PlatypusVcfDedupper, GenericVcfDedupper
 from vcf_dedup.tools.variant_comparer import VariantComparerNoAlternate, VariantComparerWithAlternate
 from vcf_dedup.tools.vcf_sorter import VcfSorter
+from vcf_dedup.constants import *
 import os
 
 
@@ -14,9 +15,23 @@ class VcfDedupRunner(object):
 
     # TODO: add the rare diseases caller here, platypus?
     # TODO: add others
-    SUPPORTED_VARIANT_CALLERS = ["strelka", "starling", "duplication_finder", "platypus"]
-    SUPPORTED_EQUALITY_MODES = ["1", "2"]
-    SUPPORTED_SELECTION_METHODS = ["af", "quality", "arbitrary", "allele_calls"]
+    SUPPORTED_VARIANT_CALLERS = [
+        STRELKA_VARIANT_CALLER,
+        STARLING_VARIANT_CALLER,
+        DUPLICATION_FINDER,
+        PLATYPUS_VARIANT_CALLER,
+        GENERIC_VARIANT_CALLER
+    ]
+    SUPPORTED_EQUALITY_MODES = [
+        INCLUDE_ALTERNATE,
+        EXCLUDE_ALTERNATE
+    ]
+    SUPPORTED_SELECTION_METHODS = [
+        SELECTION_METHOD_AF,
+        SELECTION_METHOD_ALLELE_CALLS,
+        SELECTION_METHOD_ARBITRARY,
+        SELECTION_METHOD_QUALITY
+    ]
 
     def __init__(self, config):
         self.config = config
@@ -102,12 +117,12 @@ class VcfDedupRunner(object):
             # assumes input is sorted
             self.sorted_vcf = self.input_vcf
         # selects the appropriate comparer
-        if self.equality_mode == "1":
+        if self.equality_mode == INCLUDE_ALTERNATE:
             comparer = VariantComparerWithAlternate()
-        elif self.equality_mode == "2":
+        elif self.equality_mode == EXCLUDE_ALTERNATE:
             comparer = VariantComparerNoAlternate()
         # selects the appropriate transformer
-        if self.variant_caller == "strelka":
+        if self.variant_caller == STRELKA_VARIANT_CALLER:
             transformer = StrelkaVcfDedupper(
                 self.sorted_vcf,
                 self.output_vcf,
@@ -116,7 +131,7 @@ class VcfDedupRunner(object):
                 self.sample_idx,
                 self.sample_name
             )
-        elif self.variant_caller == "starling":
+        elif self.variant_caller == STARLING_VARIANT_CALLER:
             transformer = StarlingVcfDedupper(
                 self.sorted_vcf,
                 self.output_vcf,
@@ -125,7 +140,7 @@ class VcfDedupRunner(object):
                 self.sample_idx,
                 self.sample_name
             )
-        elif self.variant_caller == "platypus":
+        elif self.variant_caller == PLATYPUS_VARIANT_CALLER:
             transformer = PlatypusVcfDedupper(
                 self.sorted_vcf,
                 self.output_vcf,
@@ -134,7 +149,16 @@ class VcfDedupRunner(object):
                 self.sample_idx,
                 self.sample_name
             )
-        elif self.variant_caller == "duplication_finder":
+        elif self.variant_caller == GENERIC_VARIANT_CALLER:
+            transformer = GenericVcfDedupper(
+                self.sorted_vcf,
+                self.output_vcf,
+                comparer,
+                self.selection_method,
+                self.sample_idx,
+                self.sample_name
+            )
+        elif self.variant_caller == DUPLICATION_FINDER:
             transformer = DuplicationFinder(
                 self.sorted_vcf,
                 self.output_vcf,

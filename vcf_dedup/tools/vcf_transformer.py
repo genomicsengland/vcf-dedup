@@ -1,9 +1,11 @@
 import vcf
+import vcf.model
 import os.path
 import logging
 from abc import ABCMeta, abstractmethod
 import time
 import sys
+from vcf_dedup.constants import *
 
 
 class VcfFormatError(Exception):
@@ -186,20 +188,27 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
     variants = []
 
-    def __init__(self, input_vcf_file, output_vcf_file, variant_comparer, selection_method, sample_idx = 0, sample_name = ""):
+    def __init__(self,
+                 input_vcf_file,
+                 output_vcf_file,
+                 variant_comparer,
+                 selection_method,
+                 sample_idx = 0,
+                 sample_name = ""
+                 ):
 
         # calls the parent constructor
         AbstractVcfTransformer.__init__(self, input_vcf_file, output_vcf_file)
         # stores the variant comparer
         self.variant_comparer = variant_comparer
         # sets the selection method
-        if selection_method == "af":
+        if selection_method == SELECTION_METHOD_AF:
             self._select_variants = self._select_mode_af
-        elif selection_method == "quality":
+        elif selection_method == SELECTION_METHOD_QUALITY:
             self._select_variants = self._select_mode_quality
-        elif selection_method == "allele_calls":
+        elif selection_method == SELECTION_METHOD_ALLELE_CALLS:
             self._select_variants = self._select_mode_allele_calls
-        elif selection_method == "arbitrary":
+        elif selection_method == SELECTION_METHOD_ARBITRARY:
             self._select_variants = self._select_mode_arbitrary
         self.sample_idx = sample_idx
         self.sample_name = sample_name
@@ -243,7 +252,8 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
     def _select_mode_allele_calls(self, variants):
         """
-        Returns the variants with the highest allele frequency
+        Returns the variants with the greater number of allele calls. If there is a collision returns the maximum AF.
+        Otherwise returns an arbitrary variant.
         :param variants:
         :return:
         """
@@ -257,16 +267,27 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
                                   for variant in variants}
             max_af = afs[max(afs, key=afs.get)]
             max_afs = [i for i, x in afs.iteritems() if x == max_af]
-            # gets the first
-            merged_variant = max_afs[0]
+            if (len(max_afs) > 1):
+                # collision with maximum AF
+                qualities = {variant: self._get_variant_calling_quality(variant)
+                             for variant in variants}
+                max_qual = qualities[max(qualities, key=qualities.get)]
+                max_quals = [i for i, x in qualities.iteritems() if x == max_qual]
+                # returns highest quality
+                merged_variant = max_quals[0]
+            else:
+                # returns highest AFs
+                merged_variant = max_afs[0]
         else:
+            # returns highest allele calls
             merged_variant = max_acs[0]
 
         return merged_variant
 
     def _select_mode_af(self, variants):
         """
-        Returns the variants with the highest allele frequency
+        Returns the variants with the highest allele frequency. If there is a collision returns the variants with
+        the maximum quality. Otherwise returns an arbitrary variant.
         :param variants:
         :return:
         """
@@ -289,7 +310,8 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
     def _select_mode_quality(self, variants):
         """
-        Returns the variant with the highest variant calling quality
+        Returns the variant with the highest variant calling quality. If there is a collision returns the maximum AF.
+        Otherwise returns an arbitrary variant.
         :param variants:
         :return:
         """
@@ -391,7 +413,11 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         for sample in variant.samples:
             alternate_alleles += sample.gt_alleles.count('1')
             total_alleles += len(sample.gt_alleles)
-        return float(alternate_alleles) / total_alleles
+        if total_alleles == 0:
+            # when no samples are detected in the VCF we don't want to fail with a division by zero
+            return 0
+        else:
+            return float(alternate_alleles) / total_alleles
 
 
 class StrelkaVcfDedupper(AbstractVcfDedupper):
@@ -523,14 +549,37 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
 
     def _get_variant_calling_quality(self, variant):
         """
-        Retrieves the variant calling quality from the QD info field
-        'Variant-quality/read-depth for this variant'
+        Retrieves the variant calling quality from the QUAL field
         :param variant:     the variant
         :return:            the variant calling quality
         """
-        variant_calling_quality = 0
-        if "QD" in variant.INFO:
-            variant_calling_quality = variant.INFO["QD"]
+        variant_calling_quality = variant.QUAL if variant.QUAL is not None else 0
+        return variant_calling_quality
+
+
+class GenericVcfDedupper(AbstractVcfDedupper):
+    """
+    This generic VCF dedupper is aimed to support any VCF based on standard annotations in the VCF specification.
+    """
+
+    def _calculate_AF(self, variant):
+        """
+        Return the allele frequency as annotated in AF field
+        :param variant:
+        :return:
+        """
+        af = 0
+        if "AF" in variant.INFO:
+            af = variant.INFO["AF"]
+        return af
+
+    def _get_variant_calling_quality(self, variant):
+        """
+        Retrieves the variant calling quality from the QUAL field
+        :param variant:     the variant
+        :return:            the variant calling quality
+        """
+        variant_calling_quality = variant.QUAL if variant.QUAL is not None else 0
         return variant_calling_quality
 
 
