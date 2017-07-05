@@ -15,6 +15,7 @@ The currrent implementation takes into account:
       - if there is a tie again, it selects an arbitrary variant
     * Greater number of allele calls
       - if there is a tie, it selects the variant with the highest allele frequency
+      - if there is a tie again, it selects the variant with the highest variant calling quality
       - if there is a tie again, it selects an arbitrary variant
     
 The output VCF should not contain any duplicate.
@@ -38,7 +39,12 @@ The number of allele calls is calculated equally for all supported variant calle
 ### Platypus
 
 * Allele frequency: `INFO["TR"][0] / INFO["TC"]`
-* Variant calling quality: `INFO["QD"]`
+* Variant calling quality: `QUAL`
+
+### Generic
+
+* Allele frequency: `INFO["AF"]`
+* Variant calling quality: `QUAL`
 
 
 ## Assumptions
@@ -113,6 +119,11 @@ vcf_dedupper --input-vcf $file --output-vcf ${file}.dedupped.vcf --variant-calle
 For Platypus it is agreed to run the following command:
 ```
 vcf_dedupper --input-vcf $file --variant-caller platypus --selection-method allele_calls --equality-mode 1 --sort 2> ${file}.duplications.vcf  | bgzip > ${file}.dedupped.vcf.gz
+```
+
+For the generic variant caller it is agreed to run the following command:
+```
+vcf_dedupper --input-vcf $file --variant-caller generic --selection-method af --equality-mode 1 --sort 2> ${file}.duplications.vcf  | bgzip > ${file}.dedupped.vcf.gz
 ```
 
 For the `duplication_finder` run the following command:
