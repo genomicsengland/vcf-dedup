@@ -131,3 +131,6 @@ For the `duplication_finder` run the following command:
 vcf_dedupper --input-vcf $file --output-vcf ${file}.duplications.vcf --variant-caller duplication_finder --selection-method af --sort --sort-threads 2 2> ${file}.log
 ```
 
+## Known issues
+
+* When the input VCF does not have header (i.e.: no line starting with '#') the first character in the first line of the output VCF is replaced with the character '#'.
