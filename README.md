@@ -134,3 +134,4 @@ vcf_dedupper --input-vcf $file --output-vcf ${file}.duplications.vcf --variant-c
 ## Known issues
 
 * When the input VCF does not have header (i.e.: no line starting with '#') the first character in the first line of the output VCF is replaced with the character '#'.
+* When running unit tests simultaneously the resulting VCFs contain variants from different tests. This can be avoided by running unit tests separately. This behaviour only affects the test environment.
