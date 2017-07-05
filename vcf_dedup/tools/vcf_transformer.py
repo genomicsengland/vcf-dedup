@@ -193,8 +193,8 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
                  output_vcf_file,
                  variant_comparer,
                  selection_method,
-                 sample_idx = 0,
-                 sample_name = ""
+                 sample_idx = None,
+                 sample_name = None
                  ):
 
         # calls the parent constructor

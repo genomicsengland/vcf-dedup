@@ -23,12 +23,12 @@ def main():
                         help='For multisample VCFs this 0-based index indicates the sample to be used to merge'
                              'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
                              'will be calculated on the sample indicated by this index.',
-                        default=0)
+                        default=None)
     parser.add_argument('--sample-name', metavar='sample_name',
                         help='For multisample VCFs the sample name indicates the sample to be used to merge'
                              'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
                              'will be calculated on the indicated sample. NOTE: sample-name overrides sample-idx',
-                        default="")
+                        default=None)
     parser.add_argument('--sort-threads', metavar='sort_threads',
                         help='The number of threads that UNIX sort will use.',
                         default="1")
