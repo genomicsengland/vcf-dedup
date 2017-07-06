@@ -1,8 +1,9 @@
 import logging
 from vcf_dedup.tools.vcf_transformer import StrelkaVcfDedupper, StarlingVcfDedupper, \
-    DuplicationFinder, PlatypusVcfDedupper
+    DuplicationFinder, PlatypusVcfDedupper, GenericVcfDedupper
 from vcf_dedup.tools.variant_comparer import VariantComparerNoAlternate, VariantComparerWithAlternate
 from vcf_dedup.tools.vcf_sorter import VcfSorter
+from vcf_dedup.constants import *
 import os
 
 
@@ -14,9 +15,23 @@ class VcfDedupRunner(object):
 
     # TODO: add the rare diseases caller here, platypus?
     # TODO: add others
-    SUPPORTED_VARIANT_CALLERS = ["strelka", "starling", "duplication_finder", "platypus"]
-    SUPPORTED_EQUALITY_MODES = ["1", "2"]
-    SUPPORTED_SELECTION_METHODS = ["af", "quality", "arbitrary", "allele_calls"]
+    SUPPORTED_VARIANT_CALLERS = [
+        STRELKA_VARIANT_CALLER,
+        STARLING_VARIANT_CALLER,
+        DUPLICATION_FINDER,
+        PLATYPUS_VARIANT_CALLER,
+        GENERIC_VARIANT_CALLER
+    ]
+    SUPPORTED_EQUALITY_MODES = [
+        INCLUDE_ALTERNATE,
+        EXCLUDE_ALTERNATE
+    ]
+    SUPPORTED_SELECTION_METHODS = [
+        SELECTION_METHOD_AF,
+        SELECTION_METHOD_ALLELE_CALLS,
+        SELECTION_METHOD_ARBITRARY,
+        SELECTION_METHOD_QUALITY
+    ]
 
     def __init__(self, config):
         self.config = config
@@ -29,21 +44,28 @@ class VcfDedupRunner(object):
         self.selection_method = config["selection_method"]
         self.equality_mode = config["equality_mode"]
         try:
-            self.sample_idx = int(config["sample_idx"])
+            self.sample_idx = int(config["sample_idx"]) if "sample_idx" in  config else None
         except ValueError:
-            raise VcfDedupInputError("'sample_idx' must be numeric")
-        self.sample_name = config["sample_name"]
+            message = "'sample_idx' must be numeric"
+            logging.error(message)
+            raise VcfDedupInputError(message)
+        self.sample_name = config["sample_name"] if "sample_name" in config else None
         try:
             self.sort_vcf = bool(config["sort_vcf"])
         except ValueError:
-            raise VcfDedupInputError("'sort_vcf' must be boolean")
+            message = "'sort_vcf' must be boolean"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         try:
             self.sort_threads = int(config["sort_threads"])
             if self.sort_threads < 1:
-                raise VcfDedupInputError("'sort_threads' must be positive and greater than zero [%s]" %
-                                         str(self.sort_threads))
+                message = "'sort_threads' must be positive and greater than zero [%s]" % str(self.sort_threads)
+                logging.error(message)
+                raise VcfDedupInputError(message)
         except ValueError:
-            raise VcfDedupInputError("'sort_threads' must be numeric")
+            message = "'sort_threads' must be numeric"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         self.temp_folder = config["temp_folder"] if config["temp_folder"] != "" else \
             os.path.dirname(os.path.realpath(self.output_vcf if self.output_vcf is not None and self.output_vcf != ""
                                              else self.input_vcf))
@@ -54,37 +76,66 @@ class VcfDedupRunner(object):
         :return:
         """
         if "input_vcf" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'input_vcf'")
+            message = "Missing parameter 'input_vcf'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "output_vcf" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'output_vcf'")
+            message = "Missing parameter 'output_vcf'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "variant_caller" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'variant_caller'")
+            message = "Missing parameter 'variant_caller'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "selection_method" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'selection_method'")
+            message = "Missing parameter 'selection_method'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "equality_mode" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'equality_mode'")
-        if "sample_idx" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'sample_idx'")
-        if "sample_name" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'sample_name'")
+            message = "Missing parameter 'equality_mode'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "sort_vcf" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'sort_vcf'")
+            message = "Missing parameter 'sort_vcf'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "sort_threads" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'sort_threads'")
+            message = "Missing parameter 'sort_threads'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "temp_folder" not in self.config:
-            raise VcfDedupInputError("Missing parameter 'temp_folder'")
+            message = "Missing parameter 'temp_folder'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if self.config["variant_caller"] not in self.SUPPORTED_VARIANT_CALLERS:
-            raise VcfDedupInputError("Non supported variant caller [%s]. The list of supported variant callers is %s" %
-                                     (self.config["variant_caller"], ", ".join(self.SUPPORTED_VARIANT_CALLERS)))
+            message = "Non supported variant caller [%s]. The list of supported variant callers is %s" % \
+                      (self.config["variant_caller"], ", ".join(self.SUPPORTED_VARIANT_CALLERS))
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if self.config["selection_method"] not in self.SUPPORTED_SELECTION_METHODS:
-            raise VcfDedupInputError("Non supported selection method [%s]. The list of supported selection methods is %s" %
-                                     (self.config["selection_method"], ", ".join(self.SUPPORTED_SELECTION_METHODS)))
+            message = "Non supported selection method [%s]. The list of supported selection methods is %s" %\
+                      (self.config["selection_method"], ", ".join(self.SUPPORTED_SELECTION_METHODS))
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if self.config["equality_mode"] not in self.SUPPORTED_EQUALITY_MODES:
-            raise VcfDedupInputError(
-                "Non supported variant equality method [%s]. The list of supported equality methods is %s" %
-                (self.config["variant_caller"], ", ".join(self.SUPPORTED_EQUALITY_MODES)))
-        if self.config["variant_caller"] == "strelka" and self.config["selection_method"] == "allele_calls":
-            raise VcfDedupInputError("Non supported selection method for Strelka which has no genotypes")
+            message = "Non supported variant equality method [%s]. The list of supported equality methods is %s" %\
+                      (self.config["variant_caller"], ", ".join(self.SUPPORTED_EQUALITY_MODES))
+            logging.error(message)
+            raise VcfDedupInputError(message)
+        if self.config["variant_caller"] == STRELKA_VARIANT_CALLER \
+                and self.config["selection_method"] == SELECTION_METHOD_ALLELE_CALLS:
+            message = "Non supported selection method [%s] for variant caller [%s] which has no genotypes" \
+                      % (SELECTION_METHOD_ALLELE_CALLS, STRELKA_VARIANT_CALLER)
+            logging.error(message)
+            raise VcfDedupInputError(message)
+        has_valid_sample_idx = "sample_idx" in self.config and self.config["sample_idx"] is not None
+        has_valid_sample_name = "sample_name" in self.config and self.config["sample_name"] is not None
+        if self.config["variant_caller"] in [STRELKA_VARIANT_CALLER, STARLING_VARIANT_CALLER] \
+                and not has_valid_sample_idx and not has_valid_sample_name:
+            message = "Variant caller [%s] requires that either [sample_name] or [sample_idx] are provided" \
+                      % self.config["variant_caller"]
+            logging.error(message)
+            raise VcfDedupInputError(message)
 
     def __sort(self):
         logging.info("Sorts the VCF before processing...")
@@ -102,12 +153,12 @@ class VcfDedupRunner(object):
             # assumes input is sorted
             self.sorted_vcf = self.input_vcf
         # selects the appropriate comparer
-        if self.equality_mode == "1":
+        if self.equality_mode == INCLUDE_ALTERNATE:
             comparer = VariantComparerWithAlternate()
-        elif self.equality_mode == "2":
+        elif self.equality_mode == EXCLUDE_ALTERNATE:
             comparer = VariantComparerNoAlternate()
         # selects the appropriate transformer
-        if self.variant_caller == "strelka":
+        if self.variant_caller == STRELKA_VARIANT_CALLER:
             transformer = StrelkaVcfDedupper(
                 self.sorted_vcf,
                 self.output_vcf,
@@ -116,7 +167,7 @@ class VcfDedupRunner(object):
                 self.sample_idx,
                 self.sample_name
             )
-        elif self.variant_caller == "starling":
+        elif self.variant_caller == STARLING_VARIANT_CALLER:
             transformer = StarlingVcfDedupper(
                 self.sorted_vcf,
                 self.output_vcf,
@@ -125,16 +176,21 @@ class VcfDedupRunner(object):
                 self.sample_idx,
                 self.sample_name
             )
-        elif self.variant_caller == "platypus":
+        elif self.variant_caller == PLATYPUS_VARIANT_CALLER:
             transformer = PlatypusVcfDedupper(
                 self.sorted_vcf,
                 self.output_vcf,
                 comparer,
-                self.selection_method,
-                self.sample_idx,
-                self.sample_name
+                self.selection_method
             )
-        elif self.variant_caller == "duplication_finder":
+        elif self.variant_caller == GENERIC_VARIANT_CALLER:
+            transformer = GenericVcfDedupper(
+                self.sorted_vcf,
+                self.output_vcf,
+                comparer,
+                self.selection_method
+            )
+        elif self.variant_caller == DUPLICATION_FINDER:
             transformer = DuplicationFinder(
                 self.sorted_vcf,
                 self.output_vcf,

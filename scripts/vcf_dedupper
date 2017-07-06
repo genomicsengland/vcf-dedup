@@ -11,7 +11,7 @@ def main():
     parser.add_argument('--output-vcf', metavar='output_vcf', help='The output VCF. If not provided it will write to standard output', default=None)
     parser.add_argument('--variant-caller', metavar='variant_caller',
                         help='The variant caller used to generate the input VCF. One of "strelka", '
-                             '"starling", "platypus", "duplication_finder" [required]', required=True)
+                             '"starling", "platypus", "generic", "duplication_finder" [required]', required=True)
     parser.add_argument('--selection-method', metavar='selection_method',
                         help='The selection method for ties in filtering status between duplicated variants. One of "af", '
                              '"quality", "allele_calls", "arbitrary" [required]', required=True)
@@ -23,12 +23,12 @@ def main():
                         help='For multisample VCFs this 0-based index indicates the sample to be used to merge'
                              'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
                              'will be calculated on the sample indicated by this index.',
-                        default=0)
+                        default=None)
     parser.add_argument('--sample-name', metavar='sample_name',
                         help='For multisample VCFs the sample name indicates the sample to be used to merge'
                              'duplicated variants. E.g. for duplication removal based on highest AF, the highest AF '
                              'will be calculated on the indicated sample. NOTE: sample-name overrides sample-idx',
-                        default="")
+                        default=None)
     parser.add_argument('--sort-threads', metavar='sort_threads',
                         help='The number of threads that UNIX sort will use.',
                         default="1")
