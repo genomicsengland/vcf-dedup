@@ -1,3 +1,12 @@
+version 0.4.0 (6 Jul 2017)
+----------------------------
+
+* Major changes
+    - Adding support for a generic mode that relies on standard VCF annotations. QUAL column for variant calling quality and AF INFO annotation for the allele frequency.
+    - Platypus support now uses QUAL instead of QD as variant calling quality value.
+* Minor changes
+    - Options not used for Platypus and generic modes `--sample-name` and `--sample-idx` are not required now. They are still required for Strelka and Starling.
+
 version 0.3.1 (5 Jul 2017)
 ----------------------------
 
