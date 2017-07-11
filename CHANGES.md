@@ -1,3 +1,12 @@
+version 0.4.1 (11 Jul 2017)
+----------------------------
+
+* Minor changes
+    - The output of sort operation is now bgzipped to better process big VCFs
+
+* Known issues
+    - The sort temporary folder parameter is broken
+
 version 0.4.0 (6 Jul 2017)
 ----------------------------
 

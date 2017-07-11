@@ -35,6 +35,8 @@ class VcfDedupRunner(object):
 
     def __init__(self, config):
         self.config = config
+        logging.debug("Configuration:")
+        logging.debug(str(self.config))
         # checks that the configuration received is correct
         self.sanity_checks()
         # loads configuration data
@@ -66,9 +68,12 @@ class VcfDedupRunner(object):
             message = "'sort_threads' must be numeric"
             logging.error(message)
             raise VcfDedupInputError(message)
-        self.temp_folder = config["temp_folder"] if config["temp_folder"] != "" else \
-            os.path.dirname(os.path.realpath(self.output_vcf if self.output_vcf is not None and self.output_vcf != ""
-                                             else self.input_vcf))
+        if "temp_folder" in config and config["temp_folder"] is not None:
+            self.temp_folder = config["temp_folder"]
+        else:
+            self.temp_folder = os.path.dirname(os.path.realpath(
+                self.output_vcf if self.output_vcf is not None and self.output_vcf != "" else self.input_vcf
+            ))
 
     def sanity_checks(self):
         """
@@ -140,7 +145,7 @@ class VcfDedupRunner(object):
     def __sort(self):
         logging.info("Sorts the VCF before processing...")
         input_basename = os.path.splitext(os.path.basename(self.input_vcf))[0]
-        self.sorted_vcf = os.path.join(self.temp_folder, "." + input_basename + ".sorted.vcf")
+        self.sorted_vcf = os.path.join(self.temp_folder, "." + input_basename + ".sorted.vcf.gz")
         vcf_sorter = VcfSorter(self.input_vcf, self.sorted_vcf, temp_folder=self.temp_folder, threads=self.sort_threads)
         vcf_sorter.sort()
 
