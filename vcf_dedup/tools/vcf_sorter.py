@@ -38,7 +38,11 @@ class VcfSorter(object):
         logging.info("Initialised!")
 
     def __sort(self):
-        sort_command = "{0} -v '#' {1} | sort {2} {3} -k1,1V -k2,2n -k4,4V -k5,5V >> {4}".format(
+        '''
+        Pastes the header, sorts the variants by chromosome, position, reference and alternate and compress them
+        :return:
+        '''
+        sort_command = "({0} '#' {1} && {0} -v '#' {1} | sort {2} {3} -k1,1V -k2,2n -k4,4V -k5,5V) | bgzip > {4}".format(
             self.ZGREP if self.is_compressed else self.GREP,
             self.input_vcf,
             "--parallel=%s" % str(self.threads) if self.threads > 1 else "",
@@ -47,20 +51,11 @@ class VcfSorter(object):
         logging.info("Running [%s]" % sort_command)
         os.system(sort_command)
 
-    def __write_header(self):
-        get_header_command = "{0} '#' {1} > {2}".format(
-            self.ZGREP if self.is_compressed else self.GREP,
-            self.input_vcf,
-            self.output_vcf)
-        logging.info("Running [%s]" % get_header_command)
-        os.system(get_header_command)
-
     def sort(self):
         """
         Runs the VCF sorting
         :return:
         """
         logging.info("Sorting...")
-        self.__write_header()
         self.__sort()
         logging.info("Sorted!")
