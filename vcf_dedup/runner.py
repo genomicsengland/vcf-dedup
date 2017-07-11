@@ -73,9 +73,12 @@ class VcfDedupRunner(object):
         if temp_folder is not None:
             self.temp_folder = temp_folder
         else:
-            self.temp_folder = os.path.dirname(os.path.realpath(
-                self.output_vcf if self.output_vcf is not None and self.output_vcf != "" else self.input_vcf
-            ))
+            if self.output_vcf is not None and self.output_vcf != "":
+                output_path = self.output_vcf
+            else:
+                output_path = self.input_vcf
+            directory = os.path.realpath(output_path)
+            self.temp_folder = os.path.dirname(directory)
 
     def sanity_checks(self):
         """
