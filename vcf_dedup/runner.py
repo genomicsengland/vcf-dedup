@@ -68,8 +68,10 @@ class VcfDedupRunner(object):
             message = "'sort_threads' must be numeric"
             logging.error(message)
             raise VcfDedupInputError(message)
-        if "temp_folder" in config and config["temp_folder"] is not None:
-            self.temp_folder = config["temp_folder"]
+
+        temp_folder = config.get('temp_folder')
+        if temp_folder is not None:
+            self.temp_folder = temp_folder
         else:
             self.temp_folder = os.path.dirname(os.path.realpath(
                 self.output_vcf if self.output_vcf is not None and self.output_vcf != "" else self.input_vcf
