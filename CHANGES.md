@@ -1,3 +1,9 @@
+version 0.4.2 (12 Jul 2017)
+----------------------------
+
+* Minor changes
+    - The sort temporary folder parameter is fixed
+
 version 0.4.1 (11 Jul 2017)
 ----------------------------
 
