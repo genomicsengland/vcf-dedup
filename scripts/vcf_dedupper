@@ -6,7 +6,7 @@ from vcf_dedup.runner import VcfDedupRunner
 
 def main():
 
-    parser = argparse.ArgumentParser(description = 'VCF variant duplication removal')
+    parser = argparse.ArgumentParser(description = 'VCF variant duplication removal - vcf-dedup v0.4.2')
     parser.add_argument('--input-vcf', metavar='input_vcf', help = 'The input VCF compressed or not [required]', required = True)
     parser.add_argument('--output-vcf', metavar='output_vcf', help='The output VCF. If not provided it will write to standard output', default=None)
     parser.add_argument('--variant-caller', metavar='variant_caller',
@@ -32,9 +32,9 @@ def main():
     parser.add_argument('--sort-threads', metavar='sort_threads',
                         help='The number of threads that UNIX sort will use.',
                         default="1")
-    parser.add_argument('--sort-tmp-folder', metavar='sort_temp_folder',
+    parser.add_argument('--sort-tmp-folder', metavar='sort_tmp_folder',
                         help='The temporary folder that UNIX sort will use (default: output folder).',
-                        default=None)
+                        default="")
     parser.add_argument('--sort',
                         help='Sorts the VCF before dedupping. Beware that VCF needs to be sorted considering '
                              'chromosome, position, reference and alternate bases.',
@@ -43,13 +43,14 @@ def main():
     parser.set_defaults(equality_mode="1")
     parser.set_defaults(sample_idx=0)
     parser.set_defaults(sort_threads="1")
-    parser.set_defaults(sort_temp_folder=None)
+    parser.set_defaults(sort_tmp_folder="")
 
 
     args = parser.parse_args()
 
     # Sets logging level
     logging.basicConfig(level = 10 if args.verbose else 40)
+    logging.debug("Arguments:" + str(args))
 
     # Creates a data structure with all config parameters
     config = {
@@ -63,7 +64,7 @@ def main():
         "sample_name": args.sample_name,
         "sort_vcf": args.sort,
         "sort_threads": args.sort_threads,
-        "temp_folder": args.sort_temp_folder
+        "temp_folder": args.sort_tmp_folder
     }
     # Calls the VCF dedupper
     runner = VcfDedupRunner(config)
