@@ -73,7 +73,7 @@ def main():
     if args.log_file != "":
         config["log_file"] = args.log_file
     if args.verbose:
-        config["verbose"] = "True"
+        config["verbose"] = True
 
     # Calls the VCF dedupper
     runner = VcfDedupRunner(config)

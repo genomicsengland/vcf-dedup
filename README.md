@@ -97,8 +97,8 @@ config = {
         "sort_vcf": False,
         "sort_threads": 1,
         "temp_folder": "",
-        "sort_mem_percentage": "90",
-        "verbose": "True"
+        "sort_mem_percentage": 90,
+        "verbose": True
         "log_file": "vcf-dedup.log"
     }
 # Calls the VCF dedupper

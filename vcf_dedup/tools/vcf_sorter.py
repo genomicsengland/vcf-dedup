@@ -7,7 +7,7 @@ class VcfSorter(object):
     GREP = "grep"
     ZGREP = "zgrep"
 
-    def __init__(self, input_vcf_file, output_vcf_file, temp_folder = None, threads = 1, mem_percentage = 80):
+    def __init__(self, input_vcf_file, output_vcf_file, temp_folder=None, threads=1, mem_percentage=80):
         """
         Constructtor for the VCF sorter
         :param input_vcf_file:
@@ -50,13 +50,15 @@ class VcfSorter(object):
         Pastes the header, sorts the variants by chromosome, position, reference and alternate and compress them
         :return:
         '''
-        sort_command = "({0} '#' {1} && {0} -v '#' {1} | sort {2} {3} {4} -k1,1V -k2,2n -k4,4V -k5,5V) | bgzip > {5}".format(
+        sort_command = "({0} '#' {1} && {0} -v '#' {1} | sort {2} {3} {4} -k1,1V -k2,2n -k4,4V -k5,5V) | bgzip > {5}"\
+            .format(
             self.ZGREP if self.is_compressed else self.GREP,
             self.input_vcf,
             "--parallel=%s" % str(self.threads) if self.threads > 1 else "",
             "--temporary-directory=%s" % self.temp_folder,
             "--buffer-size=%s%%" % str(self.mem_percentage) if self.mem_percentage is not None else "",
-            self.output_vcf)
+            self.output_vcf
+        )
         logging.info("Running [%s]" % sort_command)
         os.system(sort_command)
 

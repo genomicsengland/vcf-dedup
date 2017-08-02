@@ -32,21 +32,18 @@ class VcfDedupRunner(object):
     ]
 
     SORT_MEM_PERCENTAGE_DEFAULT = 80
+    LOGGING_FORMAT = '%(asctime)s %(levelname)s %(message)s'
 
     def __init__(self, config):
         self.config = config
 
         # Sets logging level
-        try:
-            log_level = 20 if "verbose" in self.config and bool(self.config["verbose"]) else 40
-        except ValueError:
-            log_level = 40
-
-        if "log_file" in self.config and self.config["log_file"] != "":
-            logging.basicConfig(level=log_level, filename=self.config["log_file"])
+        log_level = 20 if self.config.get('verbose') is True else 40
+        log_file = self.config.get('log_file')
+        if log_file != "" and log_file is not None:
+            logging.basicConfig(level=log_level, filename=log_file, format=self.LOGGING_FORMAT)
         else:
-            logging.basicConfig(level=log_level)
-
+            logging.basicConfig(level=log_level, format=self.LOGGING_FORMAT)
         logging.debug("Configuration:")
         logging.debug(str(self.config))
         # checks that the configuration received is correct
@@ -67,7 +64,7 @@ class VcfDedupRunner(object):
             self.temp_folder = os.path.dirname(os.path.realpath(
                 self.output_vcf if self.output_vcf is not None and self.output_vcf != "" else self.input_vcf
             ))
-        if "sort_mem_percentage" in config:
+        if config.get("sort_mem_percentage") is not None:
             self.sort_mem_percentage = int(config["sort_mem_percentage"])
         else:
             self.sort_mem_percentage = self.SORT_MEM_PERCENTAGE_DEFAULT
