@@ -13,8 +13,6 @@ class VcfDedupInputError(Exception):
 
 class VcfDedupRunner(object):
 
-    # TODO: add the rare diseases caller here, platypus?
-    # TODO: add others
     SUPPORTED_VARIANT_CALLERS = [
         STRELKA_VARIANT_CALLER,
         STARLING_VARIANT_CALLER,
@@ -33,8 +31,22 @@ class VcfDedupRunner(object):
         SELECTION_METHOD_QUALITY
     ]
 
+    SORT_MEM_PERCENTAGE_DEFAULT = 80
+
     def __init__(self, config):
         self.config = config
+
+        # Sets logging level
+        try:
+            log_level = 20 if "verbose" in self.config and bool(self.config["verbose"]) else 40
+        except ValueError:
+            log_level = 40
+
+        if "log_file" in self.config and self.config["log_file"] != "":
+            logging.basicConfig(level=log_level, filename=self.config["log_file"])
+        else:
+            logging.basicConfig(level=log_level)
+
         logging.debug("Configuration:")
         logging.debug(str(self.config))
         # checks that the configuration received is correct
@@ -45,35 +57,20 @@ class VcfDedupRunner(object):
         self.variant_caller = config["variant_caller"]
         self.selection_method = config["selection_method"]
         self.equality_mode = config["equality_mode"]
-        try:
-            self.sample_idx = int(config["sample_idx"]) if "sample_idx" in  config else None
-        except ValueError:
-            message = "'sample_idx' must be numeric"
-            logging.error(message)
-            raise VcfDedupInputError(message)
+        self.sample_idx = int(config["sample_idx"]) if "sample_idx" in config else None
         self.sample_name = config["sample_name"] if "sample_name" in config else None
-        try:
-            self.sort_vcf = bool(config["sort_vcf"])
-        except ValueError:
-            message = "'sort_vcf' must be boolean"
-            logging.error(message)
-            raise VcfDedupInputError(message)
-        try:
-            self.sort_threads = int(config["sort_threads"])
-            if self.sort_threads < 1:
-                message = "'sort_threads' must be positive and greater than zero [%s]" % str(self.sort_threads)
-                logging.error(message)
-                raise VcfDedupInputError(message)
-        except ValueError:
-            message = "'sort_threads' must be numeric"
-            logging.error(message)
-            raise VcfDedupInputError(message)
-        if "temp_folder" in config and config["temp_folder"] is not None:
+        self.sort_vcf = bool(config["sort_vcf"])
+        self.sort_threads = int(config["sort_threads"])
+        if config["temp_folder"] is not None:
             self.temp_folder = config["temp_folder"]
         else:
             self.temp_folder = os.path.dirname(os.path.realpath(
                 self.output_vcf if self.output_vcf is not None and self.output_vcf != "" else self.input_vcf
             ))
+        if "sort_mem_percentage" in config:
+            self.sort_mem_percentage = int(config["sort_mem_percentage"])
+        else:
+            self.sort_mem_percentage = self.SORT_MEM_PERCENTAGE_DEFAULT
 
     def sanity_checks(self):
         """
@@ -104,8 +101,24 @@ class VcfDedupRunner(object):
             message = "Missing parameter 'sort_vcf'"
             logging.error(message)
             raise VcfDedupInputError(message)
+        try:
+            sort_vcf = bool(self.config["sort_vcf"])
+        except ValueError:
+            message = "'sort_vcf' must be boolean and found [%s]" % str(sort_vcf)
+            logging.error(message)
+            raise VcfDedupInputError(message)
         if "sort_threads" not in self.config:
             message = "Missing parameter 'sort_threads'"
+            logging.error(message)
+            raise VcfDedupInputError(message)
+        try:
+            sort_threads = int(self.config["sort_threads"])
+            if sort_threads < 1:
+                message = "'sort_threads' must be positive and greater than zero [%s]" % str(sort_threads)
+                logging.error(message)
+                raise VcfDedupInputError(message)
+        except ValueError:
+            message = "'sort_threads' must be numeric"
             logging.error(message)
             raise VcfDedupInputError(message)
         if "temp_folder" not in self.config:
@@ -134,6 +147,13 @@ class VcfDedupRunner(object):
             logging.error(message)
             raise VcfDedupInputError(message)
         has_valid_sample_idx = "sample_idx" in self.config and self.config["sample_idx"] is not None
+        if has_valid_sample_idx:
+            try:
+                sample_idx = int(self.config["sample_idx"])
+            except ValueError:
+                message = "'sample_idx' must be numeric and found [%s]" % str(sample_idx)
+                logging.error(message)
+                raise VcfDedupInputError(message)
         has_valid_sample_name = "sample_name" in self.config and self.config["sample_name"] is not None
         if self.config["variant_caller"] in [STRELKA_VARIANT_CALLER, STARLING_VARIANT_CALLER] \
                 and not has_valid_sample_idx and not has_valid_sample_name:
@@ -141,12 +161,30 @@ class VcfDedupRunner(object):
                       % self.config["variant_caller"]
             logging.error(message)
             raise VcfDedupInputError(message)
+        if "sort_mem_percentage" in self.config:
+            try:
+                sort_mem_percentage = int(self.config["sort_mem_percentage"])
+                if sort_mem_percentage <= 0 or sort_mem_percentage > 100:
+                    message = "'sort_mem_percentage' must be in the range [1, 100] and it was found [%s]" % \
+                              str(sort_mem_percentage)
+                    logging.error(message)
+                    raise VcfDedupInputError(message)
+            except ValueError:
+                message = "'sort_mem_percentage' must be numeric"
+                logging.error(message)
+                raise VcfDedupInputError(message)
 
     def __sort(self):
         logging.info("Sorts the VCF before processing...")
         input_basename = os.path.splitext(os.path.basename(self.input_vcf))[0]
         self.sorted_vcf = os.path.join(self.temp_folder, "." + input_basename + ".sorted.vcf.gz")
-        vcf_sorter = VcfSorter(self.input_vcf, self.sorted_vcf, temp_folder=self.temp_folder, threads=self.sort_threads)
+        vcf_sorter = VcfSorter(
+            self.input_vcf,
+            self.sorted_vcf,
+            temp_folder=self.temp_folder,
+            threads=self.sort_threads,
+            mem_percentage=self.sort_mem_percentage
+        )
         vcf_sorter.sort()
 
     def run(self):
