@@ -1,3 +1,12 @@
+version 0.4.3 (2 Aug 2017)
+----------------------------
+
+* Major changes
+    - Added parameter `--mem-percentage` to control the amount of available memory used by sort command. This is quite low otherwise, default value now set to 80%.
+
+* Minor changes
+    - Added parameter `--log-file` to write logs to a file. If not provided these are still written to the standard error.
+
 version 0.4.2 (12 Jul 2017)
 ----------------------------
 

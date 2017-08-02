@@ -52,6 +52,10 @@ The number of allele calls is calculated equally for all supported variant calle
 * Multi-allelic variants are not supported
 * VCF must be sorted by chromosome, position, reference and alternate bases (beware that some tools do not take into account reference and alternate bases for sorting). Otherwise, use the `--sort` option and the input file will be sorted before deduplicating.
 
+## Requirements
+
+* UNIX sort with the parallelization feature released with coreutils 8.6 (2010-10-15) is used.
+* bgzip (samtools >= 1.2)
 
 ## Using the VCF dedupper
 
@@ -62,10 +66,12 @@ The VCF dedupper comes in two flavors:
 ### Script
 
 ```
-vcf_dedupper --input-vcf $INPUT_VCF --output-vcf $OUTPUT_VCF --variant-caller $(one of "strelka", "starling" or "duplication_finder") --selection-method $(one of "af", "quality", "allele_calls", "arbitrary")
+vcf_dedupper --input-vcf $INPUT_VCF --output-vcf $OUTPUT_VCF --variant-caller $(one of "generic", "strelka", "starling", "platypus" or "duplication_finder") --selection-method $(one of "af", "quality", "allele_calls", "arbitrary")
 ```
 
 The `duplication_finder` mode writes to the output only those variants that are duplicated without removing any duplicates. This mode is intended to facilitate the analysis of the root cause of duplications.
+
+The `generic` mode relies only on annotations defined in the VCF specification. This mode is intended to be used with any type of valid VCF.
 
 The `equality-mode` may be changed to use a less restrictive definition of duplicates using only chromosome, position and reference. By default it uses chromosome, position, reference and alternate.
 
@@ -73,7 +79,7 @@ The `sample-idx` indicates as a 0-based index for multisample VCFs the sample to
 
 The `sample-name` indicates the name of the sample to which collision criteria will be applied. This parameter overrides `sample-idx`. If the sample name does not exist an error is raised.
 
-Sorting the input vcf can be enabled with flag `--sort`. Sort uses the UNIX sort, it can be parallelized using the parameter `--sort-threads` and while the default temporary folder is that of the output VCF this can be customised using `--sort-temp-folder`
+Sorting the input vcf can be enabled with flag `--sort`. Sort uses the UNIX sort, it can be parallelized using the parameter `--sort-threads` and while the default temporary folder is that of the output VCF this can be customised using `--sort-temp-folder`. The maximum amount of memory used by sort is set to 80% of the available memory by default, but this can be customised using `--sort-mem-percentage`.
 
 ### Python module
 
@@ -90,7 +96,10 @@ config = {
         "sample_idx": sample_idx,
         "sort_vcf": False,
         "sort_threads": 1,
-        "temp_folder": ""
+        "temp_folder": "",
+        "sort_mem_percentage": 90,
+        "verbose": True
+        "log_file": "vcf-dedup.log"
     }
 # Calls the VCF dedupper
 runner = VcfDedupRunner(config)
@@ -102,7 +111,7 @@ runner.process_vcf()
 * If the parameter `output-vcf` is provided this file will be created.
 * If the parameter `output-vcf` is not provided the resulting VCF will be written to the standard output.
 * The duplicated variants will be written in `${output-vcf}.duplicated.vcf` if `output-vcf` is provided, otherwise they will be written to the standard error.
-* If the parameter `--verbose` is provided logs will be written to the standard error. Beware that logs and the duplicated variants might be both written to the standard error.
+* If the parameter `--verbose` is provided logs will be written to the standard error or to the log file (`--log-file`), if provided. Beware that logs and the duplicated variants might be both written to the standard error.
 
 ### Sample commands
 
@@ -135,10 +144,3 @@ vcf_dedupper --input-vcf $file --output-vcf ${file}.duplications.vcf --variant-c
 
 * When the input VCF does not have header (i.e.: no line starting with '#') the first character in the first line of the output VCF is replaced with the character '#'.
 * When running unit tests simultaneously the resulting VCFs contain variants from different tests. This can be avoided by running unit tests separately. This behaviour only affects the test environment.
-* Parameter `--sort-temp-folder` is broken
-
-## Dependencies
-
-When `--sort` is enabled it relies on:
-* Unix sort
-* bgzip

@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name='vcf-dedup',
-    version='0.4.2',
+    version='0.4.3',
     packages=find_packages(),
     scripts=['scripts/vcf_dedupper'],
     url='',

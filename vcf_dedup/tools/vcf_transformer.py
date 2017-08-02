@@ -212,6 +212,7 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
             self._select_variants = self._select_mode_arbitrary
         self.sample_idx = sample_idx
         self.sample_name = sample_name
+        self.duplications_count = 0
 
     def _transform_variant(self, variant):
         """
@@ -349,7 +350,7 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :param variants:
         :return: the merged variant
         """
-        logging.debug("Merging duplicate variants at %s:%s:%s>%s" % (
+        logging.info("Merging duplicate variants at %s:%s:%s>%s" % (
             variants[0].CHROM,
             int(variants[0].POS),
             variants[0].REF,
@@ -364,6 +365,7 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
             merged_variant = self._select_variants(passed_variants)
         elif len(passed_variants) == 0:
             merged_variant = self._select_variants(variants)
+        self.duplications_count += 1
 
         return merged_variant
 
@@ -400,6 +402,8 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
             self.writer.write_record(self.variants[0])
         # clears it
         self.variants = []
+        logging.info("Found %s positions having duplicated variants" % (str(self.duplications_count)))
+
 
     def _calculate_allele_calls(self, variant):
         """
