@@ -6,7 +6,7 @@ from vcf_dedup.runner import VcfDedupRunner
 
 def main():
 
-    parser = argparse.ArgumentParser(description = 'VCF variant duplication removal - vcf-dedup v0.4.2')
+    parser = argparse.ArgumentParser(description = 'VCF variant duplication removal - vcf-dedup v0.4.3')
     parser.add_argument('--input-vcf', metavar='input_vcf', help = 'The input VCF compressed or not [required]', required = True)
     parser.add_argument('--output-vcf', metavar='output_vcf', help='The output VCF. If not provided it will write to standard output', default=None)
     parser.add_argument('--variant-caller', metavar='variant_caller',
@@ -39,18 +39,20 @@ def main():
                         help='Sorts the VCF before dedupping. Beware that VCF needs to be sorted considering '
                              'chromosome, position, reference and alternate bases.',
                         action='store_true')
+    parser.add_argument('--sort-mem-percentage', metavar='sort_mem_percentage',
+                        help='The percentage of memory that sort will use. Values in the range [1, 100]. Default: 80',
+                        default="80")
+    parser.add_argument('--log-file', metavar='log_file',
+                        help='The file to which logs will be appended (default: stderr).',
+                        default="")
     parser.add_argument('--verbose', action='store_true')
     parser.set_defaults(equality_mode="1")
     parser.set_defaults(sample_idx=0)
     parser.set_defaults(sort_threads="1")
     parser.set_defaults(sort_tmp_folder="")
-
-
+    parser.set_defaults(sort_mem_percentage="80")
+    parser.set_defaults(log_file="")
     args = parser.parse_args()
-
-    # Sets logging level
-    logging.basicConfig(level = 10 if args.verbose else 40)
-    logging.debug("Arguments:" + str(args))
 
     # Creates a data structure with all config parameters
     config = {
@@ -64,8 +66,15 @@ def main():
         "sample_name": args.sample_name,
         "sort_vcf": args.sort,
         "sort_threads": args.sort_threads,
-        "temp_folder": args.sort_tmp_folder
+        "temp_folder": args.sort_tmp_folder,
+        "sort_mem_percentage": args.sort_mem_percentage,
+        "log_level" : 10 if args.verbose else 40
     }
+    if args.log_file != "":
+        config["log_file"] = args.log_file
+    if args.verbose:
+        config["verbose"] = True
+
     # Calls the VCF dedupper
     runner = VcfDedupRunner(config)
     runner.run()
