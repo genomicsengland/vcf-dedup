@@ -1,5 +1,13 @@
 import logging
 import os
+import subprocess
+
+
+class VcfSortError(Exception):
+    """
+    A exception to raise when an error sorting happens
+    """
+    pass
 
 
 class VcfSorter(object):
@@ -60,7 +68,13 @@ class VcfSorter(object):
             self.output_vcf
         )
         logging.info("Running [%s]" % sort_command)
-        os.system(sort_command)
+        sort = subprocess.Popen(sort_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sort.communicate()
+        # raise an error if sort return code is other than 0
+        if sort.returncode:
+            error_message = 'Sort returned error code {0}'.format(sort.returncode)
+            logging.error(error_message)
+            raise VcfSortError(error_message)
 
     def sort(self):
         """
