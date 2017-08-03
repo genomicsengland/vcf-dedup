@@ -152,12 +152,15 @@ class AbstractVcfTransformer(object):
         :param variant:
         :return:
         """
-        ffs = writer._map(str, [variant.CHROM, variant.POS, variant.ID, variant.REF]) \
-              + [writer._format_alt(variant.ALT), variant.QUAL or '.', writer._format_filter(variant.FILTER),
-                 writer._format_info(variant.INFO)]
+        ffs = writer._map(str, [variant.CHROM, variant.POS, variant.ID, variant.REF])
+        ffs += [
+            writer._format_alt(variant.ALT),
+            variant.QUAL or '.',
+            writer._format_filter(variant.FILTER),
+            writer._format_info(variant.INFO)
+        ]
         if variant.FORMAT:
             ffs.append(variant.FORMAT)
-
         samples = [writer._format_sample(variant.FORMAT, sample)
                    for sample in variant.samples]
         return ffs + samples
