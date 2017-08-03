@@ -6,7 +6,7 @@ from vcf_dedup.runner import VcfDedupRunner
 
 def main():
 
-    parser = argparse.ArgumentParser(description = 'VCF variant duplication removal - vcf-dedup v0.4.3')
+    parser = argparse.ArgumentParser(description = 'VCF variant duplication removal - vcf-dedup v0.4.4')
     parser.add_argument('--input-vcf', metavar='input_vcf', help = 'The input VCF compressed or not [required]', required = True)
     parser.add_argument('--output-vcf', metavar='output_vcf', help='The output VCF. If not provided it will write to standard output', default=None)
     parser.add_argument('--variant-caller', metavar='variant_caller',

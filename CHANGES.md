@@ -1,3 +1,10 @@
+version 0.4.4 (3 Aug 2017)
+----------------------------
+
+* Major changes
+    - Variants are kept in a buffer of size 10000 and only flushed to disk when full
+    - Sort return code is properly managed. When return code != 0 raises an error.
+
 version 0.4.3 (2 Aug 2017)
 ----------------------------
 

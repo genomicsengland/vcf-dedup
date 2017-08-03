@@ -14,10 +14,18 @@ class VcfFormatError(Exception):
     """
     pass
 
+class VcfDedupperError(Exception):
+    """
+    An unexpected exception in VCF dedupper
+    """
+    pass
+
 
 class AbstractVcfTransformer(object):
 
     __metaclass__ = ABCMeta
+    variants_buffer = {}
+    BUFFER_SIZE = 10000
 
     def __init__(self, input_vcf_file, output_vcf_file):
         """
@@ -96,16 +104,63 @@ class AbstractVcfTransformer(object):
         count = 0
         for variant in self.reader:
             if len(variant.ALT) > 1:
-                logging.error("The VCF contains multi-allelic variants %s:%s%s>%s. Please split them before processing!" % (variant.CHROM, str(variant.POS), variant.REF, ",".join(variant.ALT)))
+                logging.error("The VCF contains multi-allelic variants %s:%s%s>%s. Please split them before processing!" % (variant.CHROM, str(variant.POS), str(variant.REF), str(variant.ALT)))
                 raise VcfFormatError("The VCF contains multi-allelic variants. Please split them before processing!")
             self._transform_variant(variant)
             count += 1
             if count % 10000 == 0:
                 logging.info("Processed %s variants..." % str(count))
+        # this methods should take care of writing the last group of variants and flushing the buffers
         self._write_last_block()
         after = time.time()
         logging.info("Finished processing %s variants in %s seconds" % (str(count), str(after - before)))
 
+    def _write_variant(self, writer, variant):
+        """
+        Writes variants in batches of a considerable size
+        :param writer:
+        :param variant:
+        :return:
+        """
+        if writer in self.variants_buffer:
+            self.variants_buffer[writer].append(self._variant2dict(writer, variant))
+            # writes a batch of variants when reached the buffer size
+            if len(self.variants_buffer[writer]) >= self.BUFFER_SIZE:
+                self._flush_buffer(writer)
+                self.variants_buffer[writer] = []
+        else:
+            self.variants_buffer[writer] = [self._variant2dict(writer, variant)]
+
+    def _flush_buffer(self, writer):
+        """
+        Flushes the buffer for a given writer
+        :param writer:
+        :return:
+        """
+        if writer in self.variants_buffer:
+            logging.info("Writing %s variants" % str(len(self.variants_buffer[writer])))
+            writer.writer.writerows(self.variants_buffer[writer])
+            self.variants_buffer[writer] = []
+        else:
+            error_message = "Trying to flush a writer with no buffer"
+            logging.error(error_message)
+            raise VcfDedupperError(error_message)
+
+    def _variant2dict(self, writer, variant):
+        """
+        Transforms a variant object into a dictionary ready to be written
+        :param variant:
+        :return:
+        """
+        ffs = writer._map(str, [variant.CHROM, variant.POS, variant.ID, variant.REF]) \
+              + [writer._format_alt(variant.ALT), variant.QUAL or '.', writer._format_filter(variant.FILTER),
+                 writer._format_info(variant.INFO)]
+        if variant.FORMAT:
+            ffs.append(variant.FORMAT)
+
+        samples = [writer._format_sample(variant.FORMAT, sample)
+                   for sample in variant.samples]
+        return ffs + samples
 
     def _process_contig(self, contig):
         """
@@ -164,7 +219,7 @@ class DuplicationFinder(AbstractVcfTransformer):
             # writes variants only duplicated variants
             if len(self.variants) > 1:
                 for duplicated_variant in self.variants:
-                    self.writer.write_record(duplicated_variant)
+                    self._write_variant(self.writer, duplicated_variant)
             # resets variants memory
             self.variants = [variant]
         # current variant forms part of the same block, stores and continues
@@ -179,9 +234,11 @@ class DuplicationFinder(AbstractVcfTransformer):
         if len(self.variants) > 1:
             # writes merged variant
             for variant in self.variants:
-                self.writer.write_record(variant)
+                self._write_variant(self.writer, variant)
         # clears it
         self.variants = []
+        # flush the buffer
+        self._flush_buffer(self.writer)
 
 
 class AbstractVcfDedupper(AbstractVcfTransformer):
@@ -230,13 +287,13 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
                 not self.variant_comparer.equals(prev_variant, variant):
             if len(self.variants) > 1:
                 # writes merged variant
-                self.writer.write_record(self._merge_variants(self.variants))
+                self._write_variant(self.writer, self._merge_variants(self.variants))
                 # writes to VCF of duplicated variants
                 for duplicated_variant in self.variants:
-                    self.writer_duplicated.write_record(duplicated_variant)
+                    self._write_variant(self.writer_duplicated, duplicated_variant)
             else:
                 # writes the variant when there is no duplication
-                self.writer.write_record(self.variants[0])
+                self._write_variant(self.writer, self.variants[0])
             # resets variants memory
             self.variants = [variant]
         # current variant forms part of the same block, stores and continues
@@ -393,17 +450,18 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         """
         if len(self.variants) > 1:
             # writes merged variant
-            self.writer.write_record(self._merge_variants(self.variants))
+            self._write_variant(self.writer, self._merge_variants(self.variants))
             # writes duplictade variants
             for duplicated_variant in self.variants:
-                self.writer_duplicated.write_record(duplicated_variant)
+                self._write_variant(self.writer_duplicated, duplicated_variant)
         else:
             # writes the variant when there is no duplication
-            self.writer.write_record(self.variants[0])
+            self._write_variant(self.writer, self.variants[0])
         # clears it
         self.variants = []
         logging.info("Found %s positions having duplicated variants" % (str(self.duplications_count)))
-
+        self._flush_buffer(self.writer)
+        self._flush_buffer(self.writer_duplicated)
 
     def _calculate_allele_calls(self, variant):
         """
