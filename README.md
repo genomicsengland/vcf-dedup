@@ -144,3 +144,4 @@ vcf_dedupper --input-vcf $file --output-vcf ${file}.duplications.vcf --variant-c
 
 * When the input VCF does not have header (i.e.: no line starting with '#') the first character in the first line of the output VCF is replaced with the character '#'.
 * When running unit tests simultaneously the resulting VCFs contain variants from different tests. This can be avoided by running unit tests separately. This behaviour only affects the test environment.
+* The time to compute a given VCF is determined by the number of variants and the number of samples. Even if for some execution modes (e.g.: generic mode) the sample information is not used this affects the time to compute. We have observed that processing VCFs with a huge amount of samples (i.e.: 6773) have very low performance (0.2 variants/second).
