@@ -1,3 +1,9 @@
+version 0.4.5 (13 October 2017)
+----------------------------
+
+* Minor changes
+    - Fixing bug when the VCF contains no duplicates
+
 version 0.4.4 (3 Aug 2017)
 ----------------------------
 
