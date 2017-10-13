@@ -143,8 +143,7 @@ class AbstractVcfTransformer(object):
             self.variants_buffer[writer] = []
         else:
             error_message = "Trying to flush a writer with no buffer"
-            logging.error(error_message)
-            raise VcfDedupperError(error_message)
+            logging.warning(error_message)
 
     def _variant2dict(self, writer, variant):
         """
