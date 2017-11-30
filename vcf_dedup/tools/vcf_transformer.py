@@ -5,6 +5,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 import time
 import sys
+from collections import OrderedDict
 from vcf_dedup.constants import *
 
 
@@ -317,20 +318,23 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :param variants:
         :return:
         """
-        allele_calls = {variant: self._calculate_allele_calls(variant)
-                              for variant in variants}
+        allele_calls = OrderedDict()
+        for variant in variants:
+            allele_calls[variant] = self._calculate_allele_calls(variant)
         max_ac = allele_calls[max(allele_calls, key=allele_calls.get)]
         max_acs = [i for i, x in allele_calls.iteritems() if x == max_ac]
         if (len(max_acs) > 1):
             # collision with maximum allele call
-            afs = {variant: self._calculate_AF(variant)
-                                  for variant in variants}
+            afs = OrderedDict()
+            for variant in variants:
+                afs[variant] = self._calculate_AF(variant)
             max_af = afs[max(afs, key=afs.get)]
             max_afs = [i for i, x in afs.iteritems() if x == max_af]
             if (len(max_afs) > 1):
                 # collision with maximum AF
-                qualities = {variant: self._get_variant_calling_quality(variant)
-                             for variant in variants}
+                qualities = OrderedDict()
+                for variant in variants:
+                    qualities[variant] = self._get_variant_calling_quality(variant)
                 max_qual = qualities[max(qualities, key=qualities.get)]
                 max_quals = [i for i, x in qualities.iteritems() if x == max_qual]
                 # returns highest quality
@@ -351,14 +355,16 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :param variants:
         :return:
         """
-        allele_frequencies = {variant: self._calculate_AF(variant)
-                              for variant in variants}
+        allele_frequencies = OrderedDict()
+        for variant in variants:
+            allele_frequencies[variant] = self._calculate_AF(variant)
         max_af = allele_frequencies[max(allele_frequencies, key=allele_frequencies.get)]
         max_afs = [i for i, x in allele_frequencies.iteritems() if x == max_af]
         if (len(max_afs) > 1):
             # collision with maximum AF
-            qualities = {variant: self._get_variant_calling_quality(variant)
-                                  for variant in variants}
+            qualities = OrderedDict()
+            for variant in variants:
+                qualities[variant] = self._get_variant_calling_quality(variant)
             max_qual = qualities[max(qualities, key=qualities.get)]
             max_quals = [i for i, x in qualities.iteritems() if x == max_qual]
             # gets the first
@@ -375,14 +381,16 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :param variants:
         :return:
         """
-        qualities = {variant: self._get_variant_calling_quality(variant)
-                     for variant in variants}
+        qualities = OrderedDict()
+        for variant in variants:
+            qualities[variant] = self._get_variant_calling_quality(variant)
         max_qual = qualities[max(qualities, key=qualities.get)]
         max_quals = [i for i, x in qualities.iteritems() if x == max_qual]
         if (len(max_quals) > 1):
             # collision with maximum AF
-            allele_frequencies = {variant: self._calculate_AF(variant)
-                                  for variant in variants}
+            allele_frequencies = OrderedDict()
+            for variant in variants:
+                allele_frequencies[variant] = self._calculate_AF(variant)
             max_af = allele_frequencies[max(allele_frequencies, key=allele_frequencies.get)]
             max_afs = [i for i, x in allele_frequencies.iteritems() if x == max_af]
             # gets the first
