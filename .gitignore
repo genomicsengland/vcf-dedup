@@ -4,5 +4,6 @@ vcf_dedup.egg-info
 .idea
 resources/output
 build
+.env
 
 

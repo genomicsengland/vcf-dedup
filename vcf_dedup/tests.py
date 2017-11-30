@@ -8,8 +8,8 @@ import logging
 
 class VcfDedupTests(unittest.TestCase):
 
-    INPUT_FOLDER = "../resources/input"
-    OUTPUT_FOLDER = "../resources/output"
+    INPUT_FOLDER = "resources/input"
+    OUTPUT_FOLDER = "resources/output"
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
