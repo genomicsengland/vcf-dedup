@@ -1,3 +1,9 @@
+version 0.4.6 (30 November 2017)
+----------------------------
+
+* Minor changes
+    - Fixing bug when tie in AF and variant calling quality the selection of the "first" variant was not deterministic
+
 version 0.4.5 (13 October 2017)
 ----------------------------
 
