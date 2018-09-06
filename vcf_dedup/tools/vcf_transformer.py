@@ -646,12 +646,15 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
                 elif af >= 0.65:
                     post_gt = '1/1'
 
-                new_format = format_value.data._asdict()
-                new_format['OGT'] = gt
-                new_format['GT'] = post_gt
-                calldata = vcf.model.make_calldata_tuple(new_format)
-                # we update the new FORMAT fields (including updated GT and new OGT values)
-                format_value.data = calldata(*new_format.values())
+            else:
+                post_gt = gt
+
+            new_format = format_value.data._asdict()
+            new_format['OGT'] = gt
+            new_format['GT'] = post_gt
+            calldata = vcf.model.make_calldata_tuple(new_format)
+            # we update the new FORMAT fields (including updated GT and new OGT values)
+            format_value.data = calldata(*new_format.values())
 
         return variant
 
