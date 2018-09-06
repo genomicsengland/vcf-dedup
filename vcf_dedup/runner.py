@@ -53,6 +53,7 @@ class VcfDedupRunner(object):
         self.output_vcf = config["output_vcf"]
         self.variant_caller = config["variant_caller"]
         self.selection_method = config["selection_method"]
+        self.gt_postprocess = config["gt_postprocess"]
         self.equality_mode = config["equality_mode"]
         self.sample_idx = int(config["sample_idx"]) if "sample_idx" in config else None
         self.sample_name = config["sample_name"] if "sample_name" in config else None
@@ -221,7 +222,8 @@ class VcfDedupRunner(object):
                 self.sorted_vcf,
                 self.output_vcf,
                 comparer,
-                self.selection_method
+                self.selection_method,
+                self.gt_postprocess
             )
         elif self.variant_caller == GENERIC_VARIANT_CALLER:
             transformer = GenericVcfDedupper(
