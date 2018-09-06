@@ -1,0 +1,59 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##FORMAT=<ID=AU,Number=2,Type=Integer,Description="Number of 'A' alleles used in tiers 1,2">
+##FORMAT=<ID=CU,Number=2,Type=Integer,Description="Number of 'C' alleles used in tiers 1,2">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth for tier1 (used+filtered)">
+##FORMAT=<ID=DP2,Number=1,Type=Integer,Description="Read depth for tier2">
+##FORMAT=<ID=DP50,Number=1,Type=Float,Description="Average tier1 read depth within 50 bases">
+##FORMAT=<ID=FDP,Number=1,Type=Integer,Description="Number of basecalls filtered from original read depth for tier1">
+##FORMAT=<ID=FDP50,Number=1,Type=Float,Description="Average tier1 number of basecalls filtered from original read depth within 50 bases">
+##FORMAT=<ID=GU,Number=2,Type=Integer,Description="Number of 'G' alleles used in tiers 1,2">
+##FORMAT=<ID=SDP,Number=1,Type=Integer,Description="Number of reads with deletions spanning this site at tier1">
+##FORMAT=<ID=SUBDP,Number=1,Type=Integer,Description="Number of reads below tier1 mapping quality threshold aligned across this site">
+##FORMAT=<ID=SUBDP50,Number=1,Type=Float,Description="Average number of reads below tier1 mapping quality threshold aligned across sites within 50 bases">
+##FORMAT=<ID=TAR,Number=2,Type=Integer,Description="Reads strongly supporting alternate allele for tiers 1,2">
+##FORMAT=<ID=TIR,Number=2,Type=Integer,Description="Reads strongly supporting indel allele for tiers 1,2">
+##FORMAT=<ID=TOR,Number=2,Type=Integer,Description="Other reads (weak support or insufficient indel breakpoint overlap) for tiers 1,2">
+##FORMAT=<ID=TU,Number=2,Type=Integer,Description="Number of 'T' alleles used in tiers 1,2">
+##INFO=<ID=ALTMAP,Number=1,Type=Integer,Description="Tumor alternate allele read position MAP">
+##INFO=<ID=ALTPOS,Number=1,Type=Integer,Description="Tumor alternate allele read position median">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Combined depth across samples">
+##INFO=<ID=IC,Number=1,Type=Integer,Description="Number of times RU repeats in the indel allele">
+##INFO=<ID=IHP,Number=1,Type=Integer,Description="Largest reference interrupted homopolymer length intersecting with the indel">
+##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
+##INFO=<ID=MQ0,Number=1,Type=Integer,Description="Number of MAPQ == 0 reads covering this record">
+##INFO=<ID=NT,Number=1,Type=String,Description="Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.">
+##INFO=<ID=OVERLAP,Number=0,Type=Flag,Description="Somatic indel possibly overlaps a second indel.">
+##INFO=<ID=PNOISE,Number=1,Type=Float,Description="Fraction of panel containing non-reference noise at this site">
+##INFO=<ID=PNOISE2,Number=1,Type=Float,Description="Fraction of panel containing more than one non-reference noise obs at this site">
+##INFO=<ID=QSI,Number=1,Type=Integer,Description="Quality score for any somatic variant, ie. for the ALT haplotype to be present at a significantly different frequency in the tumor and normal">
+##INFO=<ID=QSI_NT,Number=1,Type=Integer,Description="Quality score reflecting the joint probability of a somatic variant and NT">
+##INFO=<ID=QSS,Number=1,Type=Integer,Description="Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal">
+##INFO=<ID=QSS_NT,Number=1,Type=Integer,Description="Quality score reflecting the joint probability of a somatic variant and NT">
+##INFO=<ID=RC,Number=1,Type=Integer,Description="Number of times RU repeats in the reference allele">
+##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt Vs. Ref read-position in the tumor">
+##INFO=<ID=RU,Number=1,Type=String,Description="Smallest repeating sequence unit in inserted or deleted sequence">
+##INFO=<ID=SGT,Number=1,Type=String,Description="Most likely somatic genotype excluding normal noise states">
+##INFO=<ID=SNVSB,Number=1,Type=Float,Description="Somatic SNV site strand bias">
+##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description="Somatic mutation">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=TQSI,Number=1,Type=Integer,Description="Data tier used to compute QSI">
+##INFO=<ID=TQSI_NT,Number=1,Type=Integer,Description="Data tier used to compute QSI_NT">
+##INFO=<ID=TQSS,Number=1,Type=Integer,Description="Data tier used to compute QSS">
+##INFO=<ID=TQSS_NT,Number=1,Type=Integer,Description="Data tier used to compute QSS_NT">
+##INFO=<ID=VQSR,Number=1,Type=Float,Description="Recalibrated quality score expressing the phred scaled probability of the somatic call being a FP observation.">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	tumor normal
+chr1	248273503	.	T	G	1497	PASS	BRF=0.29;FR=0.5;HP=2;HapScore=1;MGOF=5;MMLQ=32;MQ=46.15;NF=3;NR=2;PP=127;QD=38.0936;SC=CACCACCCAGTGTGGGGAGGA;SbPval=0.67;Source=Platypus;TC=32;TCF=19;TCR=13;TR=5;WE=248273517;WS=248273493;OLD_MULTIALLELIC=chr1:248273503:TGTGGGG/GGTGAGC/GGTGGGG;OLD_CLUMPED=chr1:248273503:TGTGGGG/GGTGAGC	GT:GL:GOF:GQ:NR:NV:PS	1|.:-1,-1,-1:5:99:32:5:248273503
+chr1	248273503	.	T	G	1497	PASS	BRF=0.29;FR=0.5;HP=2;HapScore=1;MGOF=5;MMLQ=32;MQ=46.15;NF=18;NR=12;PP=1497;QD=38.0936;SC=CACCACCCAGTGTGGGGAGGA;SbPval=0.67;Source=Platypus;TC=32;TCF=19;TCR=13;TR=30;WE=248273517;WS=248273493;OLD_MULTIALLELIC=chr1:248273503:TGTGGGG/GGTGAGC/GGTGGGG;OLD_VARIANT=chr1:248273503:TGTGGGG/GGTGGGG	GT:GL:GOF:GQ:NR:NV	./1:-1,-1,-1:5:99:32:30
+chr4	1171953	.	A	G	545	PASS	BRF=0.21;FR=0.5;HP=3;HapScore=2;MGOF=9;MMLQ=27;MQ=60;NF=11;NR=9;PP=545;QD=29.9234;SC=GTATTTGGCCAGGGCTCTGGC;SbPval=0.68;Source=Platypus;TC=37;TCF=19;TCR=18;TR=20;WE=1171968;WS=1171943;OLD_MULTIALLELIC=chr4:1171953:AGGGCTCT/GGGGCTCC/GGGGCTCT;OLD_CLUMPED=chr4:1171953:AGGGCTCT/GGGGCTCC	GT:GL:GOF:GQ:NR:NV:PS	1|.:-1,-1,-1:9:99:37:20:1171953
+chr4	1171953	.	A	G	545	PASS	BRF=0.21;FR=0.5;HP=3;HapScore=2;MGOF=9;MMLQ=27;MQ=60;NF=19;NR=18;PP=385;QD=29.9234;SC=GTATTTGGCCAGGGCTCTGGC;SbPval=0.68;Source=Platypus;TC=37;TCF=19;TCR=18;TR=37;WE=1171968;WS=1171943;OLD_MULTIALLELIC=chr4:1171953:AGGGCTCT/GGGGCTCC/GGGGCTCT;OLD_VARIANT=chr4:1171953:AGGGCTCT/GGGGCTCT	GT:GL:GOF:GQ:NR:NV	./1:-1,-1,-1:9:99:37:37
+chr5    141184176    .    C    G    481    PASS    BRF=0.25;FR=0.5;HP=4;HapScore=2;MGOF=73;MMLQ=37;MQ=50.72;NF=5;NR=9;PP=481;QD=38.8906;SC=GCGGCTCCCCCGCGCTGAGCA;SbPval=0.49;Source=Platypus;TC=28;TCF=9;TCR=19;TR=14;WE=141184196;WS=141184166;OLD_MULTIALLELIC=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC/GGCTTTGAGCAGC;OLD_CLUMPED=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC    GT:GL:GOF:GQ:NR:NV:PS    1|.:-1,-1,-1:73:99:28:14:141184176
+chr5    141184176    .    C    G    481    PASS    BRF=0.25;FR=0.5;HP=4;HapScore=2;MGOF=73;MMLQ=37;MQ=50.72;NF=4;NR=7;PP=289;QD=38.8906;SC=GCGGCTCCCCCGCGCTGAGCA;SbPval=0.49;Source=Platypus;TC=28;TCF=9;TCR=19;TR=11;WE=141184196;WS=141184166;OLD_MULTIALLELIC=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC/GGCTTTGAGCAGC;OLD_CLUMPED=chr5:141184176:CGCGCTGAGCAGA/GGCTTTGAGCAGC    GT:GL:GOF:GQ:NR:NV:PS    .|1:-1,-1,-1:73:99:28:11:141184176
+chr5	141184180	.	C	T	481	PASS	BRF=0.25;FR=0.5;HP=4;HapScore=2;MGOF=73;MMLQ=37;MQ=50.72;NF=5;NR=9;PP=481;QD=38.8906;SC=GCGGCTCCCCCGCGCTGAGCA;SbPval=0.49;Source=Platypus;TC=28;TCF=9;TCR=19;TR=14;WE=141184196;WS=141184166;OLD_MULTIALLELIC=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC/GGCTTTGAGCAGC;OLD_CLUMPED=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC	GT:GL:GOF:GQ:NR:NV:PS	1|.:-1,-1,-1:73:99:28:14:141184176
+chr5	141184180	.	C	T	481	PASS	BRF=0.25;FR=0.5;HP=4;HapScore=2;MGOF=73;MMLQ=37;MQ=50.72;NF=4;NR=7;PP=289;QD=38.8906;SC=GCGGCTCCCCCGCGCTGAGCA;SbPval=0.49;Source=Platypus;TC=28;TCF=9;TCR=19;TR=11;WE=141184196;WS=141184166;OLD_MULTIALLELIC=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC/GGCTTTGAGCAGC;OLD_CLUMPED=chr5:141184176:CGCGCTGAGCAGA/GGCTTTGAGCAGC	GT:GL:GOF:GQ:NR:NV:PS	.|1:-1,-1,-1:73:99:28:11:141184176
+chr5	141184188	.	A	C	481	PASS	BRF=0.25;FR=0.5;HP=4;HapScore=2;MGOF=73;MMLQ=37;MQ=50.72;NF=5;NR=9;PP=481;QD=38.8906;SC=GCGGCTCCCCCGCGCTGAGCA;SbPval=0.49;Source=Platypus;TC=28;TCF=9;TCR=19;TR=14;WE=141184196;WS=141184166;OLD_MULTIALLELIC=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC/GGCTTTGAGCAGC;OLD_CLUMPED=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC	GT:GL:GOF:GQ:NR:NV:PS	1|.:-1,-1,-1:73:99:28:14:141184176
+chr5	141184188	.	A	C	481	PASS	BRF=0.25;FR=0.5;HP=4;HapScore=2;MGOF=73;MMLQ=37;MQ=50.72;NF=4;NR=7;PP=289;QD=38.8906;SC=GCGGCTCCCCCGCGCTGAGCA;SbPval=0.49;Source=Platypus;TC=28;TCF=9;TCR=19;TR=11;WE=141184196;WS=141184166;OLD_MULTIALLELIC=chr5:141184176:CGCGCTGAGCAGA/GGCGTTGAGCAGC/GGCTTTGAGCAGC;OLD_CLUMPED=chr5:141184176:CGCGCTGAGCAGA/GGCTTTGAGCAGC	GT:GL:GOF:GQ:NR:NV:PS	.|1:-1,-1,-1:73:99:28:11:141184176
+chr6	31356181	.	T	G	1163	PASS	BRF=0.17;FR=0.5;HP=2;HapScore=2;MGOF=106;MMLQ=27;MQ=60;NF=9;NR=8;PP=1163;QD=29.5214;SC=CCCTGGTACCAGCGCGCTCCA;SbPval=0.62;Source=Platypus;TC=37;TCF=20;TCR=17;TR=17;WE=31356191;WS=31356158;OLD_MULTIALLELIC=chr6:31356168:AGCGCGCTCCAGCTTG/CGCGCGCTCCAGCTTG/CGCGCGCTGCAGCGTC;OLD_CLUMPED=chr6:31356168:AGCGCGCTCCAGCTTG/CGCGCGCTGCAGCGTC	GT:GL:GOF:GQ:NR:NV:PS	.|1:-1,-1,-1:106:99:37:17:31356168
+chr6	31356181	.	T	G	1028	PASS	BRF=0.17;FR=0.5;HP=1;HapScore=2;MGOF=134;MMLQ=22;MQ=60;NF=17;NR=15;PP=1028;QD=33.2116;SC=GCGCTCCAGCTTGTCCTTCCC;SbPval=0.65;Source=Platypus;TC=34;TCF=17;TCR=17;TR=32;WE=31356191;WS=31356158	GT:GL:GOF:GQ:NR:NV	1/1:-122.6,-9.33,0:134:93:34:32
+chr17	14236574	.	A	C	167	PASS	BRF=0.31;FR=0.5;HP=1;HapScore=1;MGOF=10;MMLQ=32;MQ=49.55;NF=7;NR=3;PP=167;QD=22.0468;SC=GGCCACCTCACCAAGTGTCTG;SbPval=0.78;Source=Platypus;TC=39;TCF=24;TCR=15;TR=10;WE=14236582;WS=14236561;OLD_CLUMPED=chr17:14236571:CCAA/TCAC	GT:GL:GOF:GQ:NR:NV:PS0|1:-22.64,0,-99.54:10:99:39:10:14236571
+chr17	14236574	.	A	C	955	PASS	BRF=0.31;FR=0.5;HP=1;HapScore=1;MGOF=18;MMLQ=32;MQ=49.94;NF=24;NR=14;PP=955;QD=26.0466;SC=CACCTCACCAAGTGTCTGTGC;SbPval=0.55;Source=Platypus;TC=41;TCF=26;TCR=15;TR=38;WE=14236582;WS=14236561	GT:GL:GOF:GQ:NR:NV	1/1:-154.1,-11.14,0:18:99:41:38
