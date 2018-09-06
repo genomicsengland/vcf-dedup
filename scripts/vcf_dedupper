@@ -15,9 +15,9 @@ def main():
     parser.add_argument('--selection-method', metavar='selection_method',
                         help='The selection method for ties in filtering status between duplicated variants. One of "af", '
                              '"quality", "allele_calls", "arbitrary" [required]', required=True)
-    parser.add_argument('--gt-postprocess', metavar='gt_postprocess',
-                        help='Boolean to post-process the GT values (implemented specially for Platypus) By default is False'
-                        , default= False)
+    parser.add_argument('--gt-postprocess',
+                        help='Flag to post-process the GT values (implemented specially for Platypus) By default is False'
+                        ,action='store_true')
     parser.add_argument('--equality-mode', metavar='equality_mode',
                         help='The mode to find equal variants. "1": chromosome, position, reference and alternate must '
                              'be equal; "2": chromosome, position and reference must be equal [required]',
