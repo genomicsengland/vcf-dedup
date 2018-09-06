@@ -253,8 +253,9 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
                  output_vcf_file,
                  variant_comparer,
                  selection_method,
+                 gt_postprocess,
                  sample_idx = None,
-                 sample_name = None
+                 sample_name = None,
                  ):
 
         # calls the parent constructor
@@ -273,6 +274,7 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         self.sample_idx = sample_idx
         self.sample_name = sample_name
         self.duplications_count = 0
+        self.gt_postprocess = gt_postprocess
 
     def _transform_variant(self, variant):
         """
@@ -280,6 +282,9 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :param variant: the current variant
         :return: None
         """
+        if self.gt_postprocess:
+            variant = self._process_genotype(variant)
+
         # Reads previous variant if any
         prev_variant = None
         if len(self.variants) > 0:
@@ -602,6 +607,54 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
     This class performs the merging of duplicated variants from Platypus.
     PRE: VCFs are multi-sample
     """
+
+    def _process_genotype(self, variant):
+        """
+        If gt_postprocess is True, then we post-process the GT values depending on the allele frequency
+        using NR and NV values (from FORMAT)
+        This has been done specifically for Platypus
+        GT value is updated with the new post-processed value
+        OGT value is created with the old GT value, to keep and track all values
+        :param variant: the current variant in the VCF file
+        :return: we return the variant with updated fields
+        """
+        # we need to post-process the GT values for each sample/genome in the VCF
+        for i, format_value in enumerate(variant.samples):
+            # we only want to post-process half-allele missing genotypes:
+            gt = format_value.data.GT
+            # if the gt has no '.', then post_gt = gt
+            post_gt = gt
+
+            if (gt != './.') & (gt != '.|.') & ('.' in gt):
+                nr = float(format_value.data.NR)
+                nv = float(format_value.data.NV)
+                # AF computation, so as to compute post-process GT value
+                if nr == 0:
+                    af = 0
+                else:
+                    af = float(nv / nr)
+
+                if af == 0:
+                    post_gt = '0/0'
+                elif 0 <= af < 0.25:
+                    if format_value.data.NV >= 2:
+                        post_gt = '0/1'
+                    else:
+                        post_gt = '0/0'
+                elif 0.25 <= af <= 0.65:
+                    post_gt = '0/1'
+                elif af >= 0.65:
+                    post_gt = '1/1'
+
+                new_format = format_value.data._asdict()
+                new_format['OGT'] = gt
+                new_format['GT'] = post_gt
+                calldata = vcf.model.make_calldata_tuple(new_format)
+                # we update the new FORMAT fields (including updated GT and new OGT values)
+                format_value.data = calldata(*new_format.values())
+
+        return variant
+
 
     def _calculate_AF(self, variant):
         """
