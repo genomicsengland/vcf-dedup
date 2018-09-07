@@ -625,7 +625,40 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
             # if the gt has no '.', then post_gt = gt
             post_gt = gt
 
-            if (gt != './.') & (gt != '.|.') & ('.' in gt):
+            if (gt == '.|1') | (gt == '1|.'):
+                '''
+                if 2 duplicate variants (they have been decomposed from a single original one) have 1|. and .|1
+                we need to look into `OLD_MULTIALLELIC` information, and compare the variants we find in
+                different the alleles (they are in the same phase)
+                Strategy: we will update the GT value depending on the POS and OLD_MULTIALLELIC comparison
+                NOTE that NV values will be wrong
+                '''
+                if isinstance(variant.INFO['OLD_MULTIALLELIC'], list):
+                    l_old_multiallelic = variant.INFO['OLD_MULTIALLELIC'][0].split(':')
+                elif isinstance(variant.INFO['OLD_MULTIALLELIC'], str):
+                    l_old_multiallelic = variant.INFO['OLD_MULTIALLELIC'].split(':')
+
+                index_multiallelic = int(variant.POS) - int(l_old_multiallelic[1])
+
+                # we want to compare REF variant vs ALT1 and ALT2 to assess the GT
+                ref_block = l_old_multiallelic[2].split('/')[0]
+                alt1_block = l_old_multiallelic[2].split('/')[1]
+                alt2_block = l_old_multiallelic[2].split('/')[2]
+
+                # we need to check whether we do have more than 1 the ref variant in alt1 and alt2
+                ref_variant = ref_block[index_multiallelic]
+                l_alt_variants = []
+                if len(alt1_block) > index_multiallelic:
+                    l_alt_variants.append(alt1_block[index_multiallelic])
+                if len(alt2_block) > index_multiallelic:
+                    l_alt_variants.append(alt2_block[index_multiallelic])
+
+                if ref_variant in l_alt_variants:
+                    post_gt = '0/1'
+                else:
+                    post_gt = '1/1'
+
+            elif (gt != './.') & (gt != '.|.') & ('.' in gt):
                 nr = float(format_value.data.NR)
                 nv = float(format_value.data.NV)
                 # AF computation, so as to compute post-process GT value
@@ -653,8 +686,12 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
             new_format['OGT'] = gt
             new_format['GT'] = post_gt
             calldata = vcf.model.make_calldata_tuple(new_format)
+
             # we update the new FORMAT fields (including updated GT and new OGT values)
             format_value.data = calldata(*new_format.values())
+
+            # we also update the FORMAT header, including OGT new field
+            variant.FORMAT += ':OGT'
 
         return variant
 
@@ -669,7 +706,11 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
         logging.debug("Calculating ratio of supporting reads for %s:%s" % (variant.CHROM, str(variant.POS)))
         af = 0
         if ("TC" in variant.INFO and "TR" in variant.INFO):
-            total_ac = int(variant.INFO["TC"])
+            if isinstance(variant.INFO["TC"], list):
+                total_ac = int(''.join(variant.INFO["TC"]))
+            else:
+                total_ac = int(variant.INFO["TC"])
+
             # NOTE: we assume that multi-allelic variants do not reach this stage in normalisation pipeline
             alternate_ac = int(variant.INFO["TR"][0])
             af = float(alternate_ac) / (total_ac)
