@@ -3,7 +3,6 @@ import argparse
 import logging
 from vcf_dedup.runner import VcfDedupRunner
 
-
 def main():
 
     parser = argparse.ArgumentParser(description = 'VCF variant duplication removal - vcf-dedup v0.4.4')
