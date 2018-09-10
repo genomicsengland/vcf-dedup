@@ -695,7 +695,6 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
 
         return variant
 
-
     def _calculate_AF(self, variant):
         """
         Return the ratio of supporting reads for variants called by Platypus
