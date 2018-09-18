@@ -282,7 +282,14 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         :param variant: the current variant
         :return: None
         """
-        if self.gt_postprocess:
+
+        # Check whether the variant is SNV
+        alt = variant.ALT
+        if isinstance(alt, list):
+            alt = str(alt[0])
+        else:
+            alt = str(alt)
+        if self.gt_postprocess and len(alt) == 1:
             variant = self._process_genotype(variant)
 
         # Reads previous variant if any
@@ -625,7 +632,7 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
             # if the gt has no '.', then post_gt = gt
             post_gt = gt
 
-            if (gt == '.|1') | (gt == '1|.'):
+            if (gt == '.|1') or (gt == '1|.'):
                 '''
                 if 2 duplicate variants (they have been decomposed from a single original one) have 1|. and .|1
                 we need to look into `OLD_MULTIALLELIC` information, and compare the variants we find in
@@ -658,7 +665,7 @@ class PlatypusVcfDedupper(AbstractVcfDedupper):
                 else:
                     post_gt = '1/1'
 
-            elif (gt != './.') & (gt != '.|.') & ('.' in gt):
+            elif (gt != './.') and (gt != '.|.') and ('.' in gt):
                 nr = float(format_value.data.NR)
                 nv = float(format_value.data.NV)
                 # AF computation, so as to compute post-process GT value
