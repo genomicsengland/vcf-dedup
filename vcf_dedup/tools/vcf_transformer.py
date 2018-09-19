@@ -285,11 +285,14 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
 
         # Check whether the variant is SNV
         alt = variant.ALT
+        ref = variant.REF
+
         if isinstance(alt, list):
             alt = str(alt[0])
         else:
             alt = str(alt)
-        if self.gt_postprocess and len(alt) == 1:
+
+        if self.gt_postprocess and len(alt) == 1 and len(ref) == 1:
             variant = self._process_genotype(variant)
 
         # Reads previous variant if any
