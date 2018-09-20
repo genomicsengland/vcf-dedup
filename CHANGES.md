@@ -2,7 +2,7 @@ version 0.5.0 (6 September 2018)
 --------------------------------
 
 * Minor changes
-    - Post-processing GT values when working with Platypus VCF files (we can select this via a flag called `--gt-postprocess`
+    - Post-processing GT values on SNVs when working with Platypus VCF files (we can select this via a flag called `--gt-postprocess`
 
 version 0.4.6 (30 November 2017)
 ----------------------------
