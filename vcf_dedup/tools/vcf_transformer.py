@@ -246,8 +246,6 @@ class DuplicationFinder(AbstractVcfTransformer):
 
 class AbstractVcfDedupper(AbstractVcfTransformer):
 
-    variants = []
-
     def __init__(self,
                  input_vcf_file,
                  output_vcf_file,
@@ -273,6 +271,7 @@ class AbstractVcfDedupper(AbstractVcfTransformer):
         self.sample_idx = sample_idx
         self.sample_name = sample_name
         self.duplications_count = 0
+        self.variants = []
 
     def _transform_variant(self, variant):
         """
